@@ -1,7 +1,7 @@
-import React, { useState,useEffect,useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Pagination from '../../components/common/Pagination';
 import MobilePagination from '../../components/common/MobilePagination';
-import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList, getUserRoles, updateUserRoles} from './adminApi';
+import { getAllUsers, updateUsersInfo, updateUsersState, getDeptList, getRankList, getUserRoles, updateUserRoles } from './adminApi';
 import { alertError, alertConfirm, alertSuccess } from '../../utils/alert';
 import useUserStore from '../../store/userStore';
 import useDepartmentsStore from '../../store/useDepartmentsStore';
@@ -19,13 +19,13 @@ const AVAILABLE_ROLES = [
 const AdminUsers = () => {
   const { pages } = usePageInfoStore();
   const currentPageInfo = pages.find(p => p.page_code === 'AdminUsers');
-  
+
   const mode = import.meta.env.VITE_APP_MODE;
   const isDemoMode = mode === 'demo';
-  
+
   const user = useUserStore(state => state.user);
   const userAuthGroups = user?.user_auth_group ?? [];
-  const isOpsManager = 
+  const isOpsManager =
     user?.auth_group === 'ROLE_SUPER_ADMIN' ||
     userAuthGroups.includes('ROLE_SUPER_ADMIN');
   const [employees, setEmployees] = useState([]);
@@ -49,7 +49,7 @@ const AdminUsers = () => {
   const [isPermissionOpen, setIsPermissionOpen] = useState(false);
   const [isHrManagerOpen, setIsHrManagerOpen] = useState(false);
   const invalidateGroupData = useDepartmentsStore(state => state.invalidateGroupData);
-  
+
   // 부서, 직급 리스트 (API로부터 가져옴)
   const [deptList, setDeptList] = useState([]);
   const [rankList, setRankList] = useState([]);
@@ -80,7 +80,7 @@ const AdminUsers = () => {
     return map[status] || status;
   };
   // 외부 클릭 시 수정 모드 및 드롭다운 해제
- useEffect(() => {
+  useEffect(() => {
     const handleOutsideClick = (e) => {
       if (editingId !== null && !e.target.closest('.status-edit-buttons') && !e.target.closest('.edit-trigger-btn') && !e.target.closest('.mobile-edit-btn')) {
         setEditingId(null);
@@ -127,14 +127,14 @@ const AdminUsers = () => {
       '전체': ''
     };
     getAllUsers(page, keyword, statusMap[tab]).then(resp => {
-        setEmployees(resp.data.users || []);
-        setTotalCount(resp.data.totalCount || 0);
-        setStatusCounts({
-            전체: (resp.data.activeCount || 0) + (resp.data.inactiveCount || 0) + (resp.data.retireCount || 0),
-            재직: resp.data.activeCount || 0,
-            휴직: resp.data.inactiveCount || 0,
-            퇴사: resp.data.retireCount || 0
-        });
+      setEmployees(resp.data.users || []);
+      setTotalCount(resp.data.totalCount || 0);
+      setStatusCounts({
+        전체: (resp.data.activeCount || 0) + (resp.data.inactiveCount || 0) + (resp.data.retireCount || 0),
+        재직: resp.data.activeCount || 0,
+        휴직: resp.data.inactiveCount || 0,
+        퇴사: resp.data.retireCount || 0
+      });
     });
   };
 
@@ -168,16 +168,16 @@ const AdminUsers = () => {
       name: selectedUser.name,
       dept_name: selectedUser.dept_name,
       rank_name: selectedUser.rank_name,
-      dept_seq: selectedUser.dept_seq, 
+      dept_seq: selectedUser.dept_seq,
       rank_seq: selectedUser.rank_seq,
-      role: selectedUser.role,  
-      is_hr_manager: selectedUser.is_hr_manager || 'N', 
+      role: selectedUser.role,
+      is_hr_manager: selectedUser.is_hr_manager || 'N',
     });
-    
+
     setNameError(false); // 수정 시작 시 에러 초기화
-    setIsDeptOpen(false);   
+    setIsDeptOpen(false);
     setIsRankOpen(false);
-    setEditRoles(personalRoles); 
+    setEditRoles(personalRoles);
     setIsDetailEditing(true);
   };
 
@@ -195,7 +195,7 @@ const AdminUsers = () => {
           updateUsersInfo(selectedUser.users_seq, editForm),
           updateUserRoles(selectedUser.id, editRoles), // ✅ 추가
         ]).then(() => {
-          setEmployees(prev => prev.map(emp => 
+          setEmployees(prev => prev.map(emp =>
             emp.users_seq === selectedUser.users_seq ? { ...emp, ...editForm } : emp
           ));
           setSelectedUser(prev => ({ ...prev, ...editForm }));
@@ -230,7 +230,7 @@ const AdminUsers = () => {
         updateUsersState(upUsersSeq, newStatus).then(() => {
           // 1. 현재 페이지 데이터 다시 불러오기 (데이터와 상단 카운트 동시 갱신)
           fetchEmployees(currentPage, searchKeyword, activeTab);
-          
+
           invalidateGroupData();
 
           setEditingId(null); // 수정 완료 후 버튼 숨김
@@ -245,16 +245,17 @@ const AdminUsers = () => {
 
   return (
     <div ref={containerRef} className={`h-full flex flex-col bg-white font-sans ${selectedUser ? 'p-0 lg:p-8' : 'p-6 lg:p-8'}`}>
-      
+
       {/* [1] 헤더 영역 */}
-      <div className={`mb-6 flex-shrink-0 flex items-end justify-between gap-4 ${selectedUser ? 'hidden lg:flex' : 'flex'}`}>
-        <div>
+      {/* [수정] 모바일 화면에서 +직원 등록 버튼 화면 이탈 방지를 위해 세로 배치(flex-col) 및 페이지 설명 우측 하단으로 정렬 */}
+      <div className={`mb-6 flex-shrink-0 flex flex-col lg:flex-row lg:items-end justify-between gap-3 lg:gap-4 ${selectedUser ? 'hidden lg:flex' : 'flex'}`}>
+        <div className="w-full lg:w-auto">
           <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
-          <p className="text-[0.6875rem] lg:text-sm text-gray-500 whitespace-nowrap">{currentPageInfo?.page_info}</p>
+          <p className="text-[0.6875rem] lg:text-sm text-gray-500 break-keep lg:whitespace-nowrap">{currentPageInfo?.page_info}</p>
         </div>
         <button
           onClick={() => setIsRegisterModalOpen(true)}
-          className="px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100 whitespace-nowrap flex-shrink-0"
+          className="self-end lg:self-auto px-4 py-2.5 bg-[#3530B8] text-white rounded-xl text-xs font-bold hover:bg-[#2a2594] transition-all shadow-lg shadow-indigo-100 whitespace-nowrap flex-shrink-0"
         >
           + 직원 등록
         </button>
@@ -270,11 +271,10 @@ const AdminUsers = () => {
                 setActiveTab(tab);
                 setCurrentPage(1);
               }}
-              className={`flex-1 justify-center px-2.5 lg:px-4 py-2 text-[0.6875rem] lg:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${
-                activeTab === tab 
-                  ? 'bg-[#3530B8] text-white shadow-md' 
+              className={`flex-1 justify-center px-2.5 lg:px-4 py-2 text-[0.6875rem] lg:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${activeTab === tab
+                  ? 'bg-[#3530B8] text-white shadow-md'
                   : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
-              }`}
+                }`}
             >
               {tab} <span className={`ml-1 ${activeTab === tab ? 'opacity-80' : 'text-gray-400'}`}>({statusCounts[tab]})</span>
             </button>
@@ -282,18 +282,18 @@ const AdminUsers = () => {
         </div>
 
         <div className="relative group w-full lg:w-72 flex-shrink-0">
-          <input 
-            type="text" 
+          <input
+            type="text"
             placeholder="사번, 이름, 부서로 검색"
             value={searchKeyword}
             onChange={(e) => {
-                setSearchKeyword(e.target.value);
-                setCurrentPage(1); // 검색 시 1페이지로 리셋
+              setSearchKeyword(e.target.value);
+              setCurrentPage(1); // 검색 시 1페이지로 리셋
             }}
             onKeyDown={handleKeyDown}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl 
             focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 outline-none transition-all placeholder:text-gray-300 text-sm text-gray-700 shadow-sm"/>
-          <div 
+          <div
             onClick={handleSearch}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#3530B8] transition-colors cursor-pointer"
           >
@@ -306,7 +306,7 @@ const AdminUsers = () => {
 
       {/* [3] 메인 콘텐츠 영역 */}
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
-        
+
         <div className={`flex flex-col bg-white border border-slate-100 rounded-[32px] 
           shadow-sm overflow-hidden transition-all duration-500 min-h-0 ${selectedUser ? 'hidden lg:flex lg:flex-[0.65] xl:flex-[0.7]' : 'flex-1'}`}>
           <div className="flex-1 overflow-y-auto p-6 pt-0 overflow-x-hidden sm:overflow-x-auto custom-scrollbar">
@@ -325,7 +325,7 @@ const AdminUsers = () => {
                   <th className="pb-4 text-[0.6875rem] font-bold text-slate-400 tracking-wider text-center w-[150px]">관리</th>
                 </tr>
               </thead>
-              
+
               <tbody className="divide-y divide-slate-100 sm:divide-slate-50/60 block sm:table-row-group">
                 {filteredEmployees.length === 0 ? (
                   <tr className="block sm:table-row">
@@ -335,12 +335,12 @@ const AdminUsers = () => {
                   </tr>
                 ) : (
                   filteredEmployees.map((emp) => (
-                    <tr 
-                      key={emp.users_seq} 
-                      onClick={() => { setSelectedUser(emp); setIsDetailEditing(false);  setIsDeptOpen(false); setIsRankOpen(false);}}
+                    <tr
+                      key={emp.users_seq}
+                      onClick={() => { setSelectedUser(emp); setIsDetailEditing(false); setIsDeptOpen(false); setIsRankOpen(false); }}
                       className={`hover:bg-[#F5F8FF] transition-colors block sm:table-row py-4 sm:py-0 border-b border-slate-50 sm:border-none
                          relative cursor-pointer ${selectedUser?.users_seq === emp.users_seq ? 'bg-[#F0F4FF] hover:bg-[#F0F4FF]' : ''}`}>
-                      
+
                       <td className="py-1 sm:py-4 pl-4 text-xs font-bold text-slate-400 font-mono block sm:table-cell sm:text-slate-700 sm:align-middle ">
                         <span className="inline sm:hidden text-[0.625rem] font-medium text-slate-300 mr-1">사번</span>
                         {emp.users_seq}
@@ -352,11 +352,10 @@ const AdminUsers = () => {
                       </td>
                       <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-[10px] text-slate-400 font-mono inline-block sm:table-cell sm:text-left whitespace-nowrap align-baseline sm:align-middle">
                         {emp.id}
-                        <span className={`inline sm:hidden ml-2 px-1.5 py-0.5 rounded-full text-[9px] font-semibold text-center ${
-                          getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                          getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
-                          'bg-[#FFF0F0] text-[#FF4D4F]'
-                        }`}>
+                        <span className={`inline sm:hidden ml-2 px-1.5 py-0.5 rounded-full text-[9px] font-semibold text-center ${getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' :
+                            getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                              'bg-[#FFF0F0] text-[#FF4D4F]'
+                          }`}>
                           {getStatusLabel(emp.status)}
                         </span>
                       </td>
@@ -373,11 +372,10 @@ const AdminUsers = () => {
                       </td>
 
                       <td className="hidden sm:table-cell py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center sm:align-middle">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
-                          getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                          getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
-                          'bg-[#FFF0F0] text-[#FF4D4F]'
-                        }`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' :
+                            getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                              'bg-[#FFF0F0] text-[#FF4D4F]'
+                          }`}>
                           {getStatusLabel(emp.status)}
                         </span>
                       </td>
@@ -419,19 +417,19 @@ const AdminUsers = () => {
                       <td className="py-2 px-2 block sm:table-cell text-left sm:text-center w-fit sm:w-[150px] sm:min-w-[150px] clear-both mt-2">
                         {editingId === emp.users_seq ? (
                           <div className="status-edit-buttons flex gap-1 justify-start sm:justify-center w-full whitespace-nowrap">
-                            <button 
+                            <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleStatusChange(e, emp.users_seq, 'ACTIVE'); }}
                               className=" px-2 py-1 text-[10px] font-semibold text-[#10B981] bg-white border border-[#10B981]/30 rounded-full">
                               재직
                             </button>
-                            <button 
+                            <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleStatusChange(e, emp.users_seq, 'INACTIVE'); }}
                               className="px-2 py-1 text-[10px] font-semibold text-[#FF9800] bg-white border border-[#FF9800]/30 rounded-full">
                               휴직
                             </button>
-                            <button 
+                            <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); handleStatusChange(e, emp.users_seq, 'RETIRE'); }}
                               className="px-2 py-1 text-[10px] font-semibold text-[#FF4D4F] bg-white border border-[#FF4D4F]/30 rounded-full">
@@ -439,7 +437,7 @@ const AdminUsers = () => {
                             </button>
                           </div>
                         ) : (getStatusLabel(emp.status) !== '퇴사' || isOpsManager) ? (
-                          <button 
+                          <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -448,7 +446,7 @@ const AdminUsers = () => {
                             className="edit-trigger-btn w-max px-7 py-1 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-full hover:bg-slate-50 shadow-sm">
                             수정
                           </button>
-                        ) :null}
+                        ) : null}
                       </td>
                     </tr>
                   ))
@@ -459,15 +457,15 @@ const AdminUsers = () => {
 
           <div className="border-t border-gray-50 bg-white rounded-b-[32px] py-2">
             <MobilePagination
-              count={totalPages} 
-              page={currentPage} 
-              onChange={handlePageChange} 
+              count={totalPages}
+              page={currentPage}
+              onChange={handlePageChange}
             />
             <div className="hidden lg:block">
-              <Pagination 
-                count={totalPages} 
-                page={currentPage} 
-                onChange={handlePageChange} 
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={handlePageChange}
               />
             </div>
           </div>
@@ -485,7 +483,7 @@ const AdminUsers = () => {
                 </svg>
               </button>
             </div>
-             
+
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               <div className="flex flex-col mb-8">
                 {isDetailEditing ? (
@@ -498,7 +496,7 @@ const AdminUsers = () => {
                       value={editForm.name}
                       onChange={(e) => {
                         if (e.target.value.length <= 6) {
-                          setEditForm({...editForm, name: e.target.value});
+                          setEditForm({ ...editForm, name: e.target.value });
                           if (e.target.value.trim()) setNameError(false); // 입력 시 에러 해제
                         }
                       }}
@@ -530,10 +528,9 @@ const AdminUsers = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">재직 상태</span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${
-                        getStatusLabel(selectedUser.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' : 
-                        getStatusLabel(selectedUser.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' : 
-                        'bg-[#FFF0F0] text-[#FF4D4F]'}`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${getStatusLabel(selectedUser.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' :
+                          getStatusLabel(selectedUser.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                            'bg-[#FFF0F0] text-[#FF4D4F]'}`}>
                         {getStatusLabel(selectedUser.status)}
                       </span>
                     </div>
@@ -541,8 +538,8 @@ const AdminUsers = () => {
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">부서</span>
                       {isDetailEditing ? (
                         <div className="relative custom-dropdown w-full">
-                          <div 
-                            onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); setIsPermissionOpen(false); setIsHrManagerOpen(false);}}
+                          <div
+                            onClick={() => { setIsDeptOpen(!isDeptOpen); setIsRankOpen(false); setIsPermissionOpen(false); setIsHrManagerOpen(false); }}
                             className={`w-full px-3 py-1.5 bg-white border ${isDeptOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
                           >
                             <span>{editForm.dept_name}</span>
@@ -553,18 +550,18 @@ const AdminUsers = () => {
                           {isDeptOpen && (
                             <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                               {deptList.map((dept, idx) => (
-                                <div 
+                                <div
                                   key={dept.dept_seq}
-                                  onClick={() => { 
-                                  setEditForm(prev => {
-                                    return { 
-                                      ...prev, 
-                                      dept_name: dept.dept_name,  // 부서 이름 저장
-                                      dept_seq: dept.dept_seq,    // 부서 번호 저장 
-                                    };
-                                  });
-                                    setIsDeptOpen(false); 
-                                    setIsRankOpen(false); 
+                                  onClick={() => {
+                                    setEditForm(prev => {
+                                      return {
+                                        ...prev,
+                                        dept_name: dept.dept_name,  // 부서 이름 저장
+                                        dept_seq: dept.dept_seq,    // 부서 번호 저장 
+                                      };
+                                    });
+                                    setIsDeptOpen(false);
+                                    setIsRankOpen(false);
                                   }}
                                   className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
                                 >
@@ -579,44 +576,44 @@ const AdminUsers = () => {
                       )}
                     </div>
                     <div className="flex justify-between items-center">
-                    <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">직급</span>
-                    {isDetailEditing ? (
-                      <div className="relative custom-dropdown w-full">
-                        <div 
-                          onClick={() => { 
-                            setIsRankOpen(!isRankOpen); 
-                            setIsDeptOpen(false); 
-                            setIsPermissionOpen(false); 
-                            setIsHrManagerOpen(false);
-                          }}
-                          className={`w-full px-3 py-1.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
-                        >
-                          <span>{editForm.rank_name}</span>
-                          <svg className={`w-3 h-3 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </div>
-                        {isRankOpen && (
-                          <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                            {rankList
-                              .map((rank, idx) => (
-                              <div 
-                                key={rank.rank_seq}
-                                onClick={() => { 
-                                  setEditForm(prev => ({ ...prev, rank_name: rank.rank_name, rank_seq: rank.rank_seq }));
-                                  setIsRankOpen(false); 
-                                }}
-                                className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
-                              >
-                                {rank.rank_name}
-                              </div>
-                            ))}
+                      <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">직급</span>
+                      {isDetailEditing ? (
+                        <div className="relative custom-dropdown w-full">
+                          <div
+                            onClick={() => {
+                              setIsRankOpen(!isRankOpen);
+                              setIsDeptOpen(false);
+                              setIsPermissionOpen(false);
+                              setIsHrManagerOpen(false);
+                            }}
+                            className={`w-full px-3 py-1.5 bg-white border ${isRankOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
+                          >
+                            <span>{editForm.rank_name}</span>
+                            <svg className={`w-3 h-3 text-gray-400 transition-transform ${isRankOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
                           </div>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-xs font-bold text-slate-700">{isDetailEditing ? editForm.rank_name : selectedUser.rank_name}</span>
-                    )}
+                          {isRankOpen && (
+                            <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                              {rankList
+                                .map((rank, idx) => (
+                                  <div
+                                    key={rank.rank_seq}
+                                    onClick={() => {
+                                      setEditForm(prev => ({ ...prev, rank_name: rank.rank_name, rank_seq: rank.rank_seq }));
+                                      setIsRankOpen(false);
+                                    }}
+                                    className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0"
+                                  >
+                                    {rank.rank_name}
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs font-bold text-slate-700">{isDetailEditing ? editForm.rank_name : selectedUser.rank_name}</span>
+                      )}
                     </div>
                     {/* ✅ 근태 담당자 — 인사팀 직원에게만 표시 */}
                     {selectedUser.auth_group === 'ROLE_HR_ADMIN' && (
@@ -624,12 +621,12 @@ const AdminUsers = () => {
                         <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">근태 담당자</span>
                         {isDetailEditing ? (
                           <div className="relative custom-dropdown w-full">
-                            <div 
-                              onClick={() => { 
-                                setIsHrManagerOpen(!isHrManagerOpen); 
-                                setIsDeptOpen(false); 
-                                setIsRankOpen(false); 
-                                setIsPermissionOpen(false); 
+                            <div
+                              onClick={() => {
+                                setIsHrManagerOpen(!isHrManagerOpen);
+                                setIsDeptOpen(false);
+                                setIsRankOpen(false);
+                                setIsPermissionOpen(false);
                               }}
                               className={`w-full px-3 py-1.5 bg-white border ${isHrManagerOpen ? 'border-[#3530B8] ring-2 ring-[#3530B8]/5' : 'border-gray-200'} rounded-lg text-[0.6875rem] font-bold transition-all cursor-pointer flex justify-between items-center text-slate-700`}
                             >
@@ -640,19 +637,19 @@ const AdminUsers = () => {
                             </div>
                             {isHrManagerOpen && (
                               <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                                <div 
-                                  onClick={() => { 
+                                <div
+                                  onClick={() => {
                                     setEditForm(prev => ({ ...prev, is_hr_manager: 'Y' }));
-                                    setIsHrManagerOpen(false); 
+                                    setIsHrManagerOpen(false);
                                   }}
                                   className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0 text-slate-700"
                                 >
                                   담당자
                                 </div>
-                                <div 
-                                  onClick={() => { 
+                                <div
+                                  onClick={() => {
                                     setEditForm(prev => ({ ...prev, is_hr_manager: 'N' }));
-                                    setIsHrManagerOpen(false); 
+                                    setIsHrManagerOpen(false);
                                   }}
                                   className="px-3 py-2 text-[0.625rem] hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0 text-slate-700"
                                 >
@@ -662,11 +659,10 @@ const AdminUsers = () => {
                             )}
                           </div>
                         ) : (
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${
-                            selectedUser.is_hr_manager === 'Y'
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${selectedUser.is_hr_manager === 'Y'
                               ? 'bg-[#EEF2FF] text-[#3530B8]'
                               : 'bg-slate-100 text-slate-400'
-                          }`}>
+                            }`}>
                             {selectedUser.is_hr_manager === 'Y' ? '✓ 담당자' : '해당 없음'}
                           </span>
                         )}
@@ -758,12 +754,12 @@ const AdminUsers = () => {
             <div className="p-6 border-t border-gray-50 flex gap-3 flex-shrink-0">
               {isDetailEditing ? (
                 <>
-                  <button 
+                  <button
                     onClick={() => setIsDetailEditing(false)}
                     className="flex-1 py-3 bg-white border border-slate-200 text-slate-500 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all">
                     취소
                   </button>
-                  <button 
+                  <button
                     onClick={handleDetailSave}
                     className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">
                     저장
@@ -771,13 +767,13 @@ const AdminUsers = () => {
                 </>
               ) : (
                 <>
-                  <button 
+                  <button
                     onClick={() => setSelectedUser(null)}
                     className="flex-1 py-3 bg-white border border-slate-200 text-slate-500 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all">
                     닫기
                   </button>
                   {(getStatusLabel(selectedUser.status) !== '퇴사' || isOpsManager) && (
-                    <button 
+                    <button
                       onClick={handleDetailEdit}
                       className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">
                       정보 수정
@@ -789,7 +785,7 @@ const AdminUsers = () => {
           </div>
         )}
       </div>
-      
+
       {/* 직원 등록 모달 */}
       <RegisterUserModal
         isOpen={isRegisterModalOpen}
@@ -799,7 +795,8 @@ const AdminUsers = () => {
         rankList={rankList}
       />
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
