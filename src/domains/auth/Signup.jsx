@@ -292,9 +292,14 @@ const Signup = () => {
     showLoading();
     signupRequest(data).then(() => {
       alertSuccess('신청 완료', '회원가입 신청이 완료되었습니다.');
+      hideLoading();
       navigate("/");
     })
-    hideLoading();
+      .catch(error => {
+        hideLoading();
+        const message = error.response?.data || '회원가입 처리 중 오류가 발생했습니다.';
+        setErrors(prev => ({ ...prev, ssn: message }));
+      });
   };
 
   return (
