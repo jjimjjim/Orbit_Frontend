@@ -84,6 +84,51 @@ export const connectSocket = (usersId) => {
                             showToast(noti.content, "🗑️");
                             break;
 
+                        // 비품 신청 알림
+                        case "SUPPLY":
+                            showToast(noti.content, "🖥️");
+                            break;
+
+                        // 비품 신청 승인 알림
+                        case "SUPPLY_APPROVED":
+                            showToast(noti.content, "✅");
+                            break;
+
+                        // 비품 신청 반려 알림
+                        case "SUPPLY_REJECTED":
+                            showToast(noti.content, "❌");
+                            break;
+
+                        // 증명서 발급 신청 알림
+                        case "CERTISSUE":
+                            showToast(noti.content, "📄");
+                            break;
+
+                        // 증명서 발급 신청 승인 알림
+                        case "CERTISSUE_APPROVED":
+                            showToast(noti.content, "✅");
+                            break;
+
+                        // 증명서 발급 신청 반려 알림
+                        case "CERTISSUE_REJECTED":
+                            showToast(noti.content, "❌");
+                            break;
+
+                        // 회원가입 신청 알림
+                        case "SIGNUP":
+                            showToast(noti.content, "🧑‍💼");
+                            break;
+
+                        // 연장근무 신청 알림
+                        case "OVERTIME":
+                            showToast(noti.content, "⏳");
+                            break;
+
+                        // 근무시간 정정 신청 알림
+                        case "CHECKOUT":
+                            showToast(noti.content, "🕒");
+                            break;
+
                         default:
                             showToast(noti.content);
                     }
