@@ -204,15 +204,22 @@ const MyPageEdit = () => {
     setErrors({});
     const newErrors = {};
 
-    if (formData.email && !emailRegex.test(formData.email)) {
+    const email = formData.email?.trim() || '';
+
+    if (!email) {
+      newErrors.email = '이메일을 입력해 주세요.';
+    } else if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'example@email.com 등 알맞은 형식으로 입력해주세요.';
-    }
-    if (!isEmailChecked) {
+    } else if (!isEmailChecked) {
       newErrors.emailCheck = '이메일 중복 확인이 필요합니다.';
     }
-    if (formData.phone && !phoneRegex.test(formData.phone)) {
+
+    if (!formData.phone || !formData.phone.trim()) {
+      newErrors.phone = '휴대전화 번호를 입력해 주세요.';
+    } else if (formData.phone && !phoneRegex.test(formData.phone)) {
       newErrors.phone = '010-0000-0000 형식으로 입력해주세요.';
     }
+
     if (!formData.address2 || !formData.address2.trim()) {
       newErrors.address2 = '상세주소를 입력해주세요.';
     }
