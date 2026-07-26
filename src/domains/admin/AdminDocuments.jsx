@@ -80,6 +80,10 @@ const AdminDocuments = () => {
       'application/haansofthwp': ['.hwp'],
       'application/x-hwp': ['.hwp'],
 
+      // HWPX
+      'application/hwp+zip': ['.hwpx'],
+      'application/x-hwpml': ['.hwpx'],
+
       // Excel
       'application/vnd.ms-excel': ['.xls'],
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
@@ -243,7 +247,7 @@ const AdminDocuments = () => {
   };
 
   const handlePreview = (doc) => {
-    const unsupported = ['.hwp', '.xls', '.xlsx'];
+    const unsupported = ['.hwp', '.hwpx', '.xls', '.xlsx'];
     const isUnsupported = unsupported.some(ext => doc.file_sysname?.toLowerCase().endsWith(ext));
 
     if (isUnsupported) {
