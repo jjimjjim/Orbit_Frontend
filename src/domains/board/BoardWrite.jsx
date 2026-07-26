@@ -141,6 +141,86 @@ const BoardWrite = () => {
     };
   }, []);
 
+  // [수정] 모바일에서 텍스트 선택(드래그) 없이 폰트 크기를 먼저 변경하고 글을 쓸 때 크기가 원래대로 작아져 버리는 현상 방지
+  useEffect(() => {
+    if (user === null) return;
+
+    const timer = setTimeout(() => {
+      const quill = quillRef.current?.getEditor();
+      if (!quill) return;
+
+      let pendingSize = null;
+      let lastRange = null;
+
+      // 툴바 내 폰트 사이즈 드롭다운 선택 이벤트 감지
+      const sizePickerItems = quill.getModule('toolbar')?.container?.querySelectorAll('.ql-size .ql-picker-item');
+      if (sizePickerItems) {
+        sizePickerItems.forEach((item) => {
+          const handleSelect = () => {
+            const activeRange = quill.getSelection() || lastRange;
+            // 드래그 선택 영역(length > 0) 없이 커서만 있는 상태에서 폰트 크기를 선택한 경우
+            if (!activeRange || activeRange.length === 0) {
+              const val = item.getAttribute('data-value');
+              pendingSize = val ? val : false; // false는 기본 폰트 크기(normal)
+            } else {
+              pendingSize = null;
+            }
+          };
+          item.addEventListener('click', handleSelect);
+          item.addEventListener('touchend', handleSelect);
+          item._cleanupSizeListener = () => {
+            item.removeEventListener('click', handleSelect);
+            item.removeEventListener('touchend', handleSelect);
+          };
+        });
+      }
+
+      // 모바일 화면 터치 등으로 에디터 커서(길이 0)가 잡힐 때 기억해둔 대기 폰트 크기가 있으면 서식 재부여
+      const handleSelectionChange = (range) => {
+        if (range) {
+          lastRange = range;
+          if (range.length === 0 && pendingSize !== null) {
+            quill.format('size', pendingSize);
+          } else if (range.length > 0) {
+            pendingSize = null;
+          }
+        }
+      };
+
+      // 글자 입력이 시작되면 해당 폰트 스타일이 DOM에 등록되므로 대기 폰트 크기 초기화
+      const handleTextChange = (delta, oldDelta, source) => {
+        if (source === 'user' && pendingSize !== null) {
+          pendingSize = null;
+        }
+      };
+
+      quill.on('selection-change', handleSelectionChange);
+      quill.on('text-change', handleTextChange);
+
+      quill._mobileSizeCleanup = () => {
+        quill.off('selection-change', handleSelectionChange);
+        quill.off('text-change', handleTextChange);
+        if (sizePickerItems) {
+          sizePickerItems.forEach((item) => {
+            if (item._cleanupSizeListener) {
+              item._cleanupSizeListener();
+              delete item._cleanupSizeListener;
+            }
+          });
+        }
+      };
+    }, 150);
+
+    return () => {
+      clearTimeout(timer);
+      const quill = quillRef.current?.getEditor();
+      if (quill && quill._mobileSizeCleanup) {
+        quill._mobileSizeCleanup();
+        delete quill._mobileSizeCleanup;
+      }
+    };
+  }, [user]);
+
   if (user === null) {
     return <div>로딩 중...</div>;
   }
