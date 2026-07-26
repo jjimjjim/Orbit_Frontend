@@ -147,7 +147,7 @@ const AdminSignup = () => {
       newErrors.hireDate = '입사일자를 입력해 주세요.';
       isValid = false;
     } else if (!hireDateRegex.test(hireDate)) {
-      newErrors.hireDate = 'YYYY-MM-DD 형식으로 입력해 주세요.';
+      newErrors.hireDate = 'YYYYMMDD 형식으로 입력해 주세요.';
       isValid = false;
     } else {
       const [yy, mm, dd] = hireDate.split('-').map(Number);
@@ -521,10 +521,20 @@ const AdminSignup = () => {
                             type="text"
                             value={hireDate}
                             onChange={(e) => {
-                              setHireDate(e.target.value);
+                              const value = e.target.value;
+                              const onlyNums = value.replace(/[^\d]/g, '').slice(0, 8);
+                              let finalValue = onlyNums;
+                              if (onlyNums.length <= 4) {
+                                finalValue = onlyNums;
+                              } else if (onlyNums.length <= 6) {
+                                finalValue = `${onlyNums.slice(0, 4)}-${onlyNums.slice(4)}`;
+                              } else {
+                                finalValue = `${onlyNums.slice(0, 4)}-${onlyNums.slice(4, 6)}-${onlyNums.slice(6)}`;
+                              }
+                              setHireDate(finalValue);
                               if (errors.hireDate) setErrors(prev => ({ ...prev, hireDate: '' }));
                             }}
-                            placeholder="YYYY-MM-DD 형식으로 입력해주세요"
+                            placeholder="YYYYMMDD 형식으로 입력해주세요"
                             className={`w-full px-4 py-2.5 bg-white border ${errors.hireDate ? 'border-red-500' : 'border-gray-200'} rounded-xl text-xs font-medium transition-all focus:outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5`}
                           />
                           {/* 달력 선택 UI
