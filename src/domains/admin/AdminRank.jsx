@@ -235,13 +235,8 @@ const AdminRank = () => {
         await updateRankOrder(data);
     }
 
-    const handleDrop = async (event, dropIndex) => {
-        event.preventDefault();
-
-        const sourceIndex = dragIndexRef.current;
-
-        if (sourceIndex === null || sourceIndex === dropIndex) {
-            handleDragEnd();
+    const moveAndSaveRank = async (sourceIndex, dropIndex) => {
+        if (sourceIndex === null || dropIndex === null || sourceIndex === dropIndex) {
             return;
         }
 
@@ -254,7 +249,6 @@ const AdminRank = () => {
         const reorderedRanks = reorderRanks(nextRanks);
 
         setRanks(reorderedRanks);
-        handleDragEnd();
 
         let errorMessage = null;
 
@@ -291,6 +285,15 @@ const AdminRank = () => {
         );
     };
 
+    const handleDrop = async (event, dropIndex) => {
+        event.preventDefault();
+
+        const sourceIndex = dragIndexRef.current;
+        handleDragEnd();
+
+        await moveAndSaveRank(sourceIndex, dropIndex);
+    };
+
     const handleDragEnd = () => {
         dragIndexRef.current = null;
         setDraggingIndex(null);
@@ -307,8 +310,6 @@ const AdminRank = () => {
     const handleTouchMove = (event) => {
         if (touchDragIndexRef.current === null) return;
 
-        event.preventDefault();
-
         const touch = event.touches[0];
         const targetRow = document
             .elementFromPoint(touch.clientX, touch.clientY)
@@ -323,23 +324,16 @@ const AdminRank = () => {
         }
     };
 
-    const handleTouchEnd = () => {
+    const handleTouchEnd = async () => {
         const sourceIndex = touchDragIndexRef.current;
         const dropIndex = touchDropIndexRef.current;
-
-        if (sourceIndex !== null && dropIndex !== null && sourceIndex !== dropIndex) {
-            setRanks(prev => {
-                const nextRanks = [...prev];
-                const [movedRank] = nextRanks.splice(sourceIndex, 1);
-                nextRanks.splice(dropIndex, 0, movedRank);
-                return reorderRanks(nextRanks);
-            });
-        }
 
         touchDragIndexRef.current = null;
         touchDropIndexRef.current = null;
         setDraggingIndex(null);
         setDragOverIndex(null);
+
+        await moveAndSaveRank(sourceIndex, dropIndex);
     };
 
     return (
