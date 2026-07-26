@@ -46,12 +46,21 @@ const generalMenuItems = [
     name: '인사 관리',
     icon: faAddressCard,
     authGroups: ['ROLE_HR_ADMIN'],
+    notiTypes: ['SIGNUP', 'OVERTIME', 'CHECKOUT'],
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '직급 관리', path: '/adminRank' },
-      { name: '회원가입 관리', path: '/adminSignup' },
-      { name: '근태 관리', path: '/adminAttendance' },
+      {
+        name: '회원가입 관리',
+        path: '/adminSignup',
+        notiTypes: ['SIGNUP']
+      },
+      {
+        name: '근태 관리',
+        path: '/adminAttendance',
+        notiTypes: ['OVERTIME', 'CHECKOUT']
+      },
       { name: '연차 관리', path: '/adminLeave' }
     ]
   },
@@ -59,18 +68,28 @@ const generalMenuItems = [
     name: '증명서 관리',
     icon: faClipboardCheck,
     authGroups: ['ROLE_HR_ADMIN'],
+    notiTypes: ['CERTISSUE'],
     subItems: [
       { name: '증명서 유형 관리', path: '/adminCertType' },
-      { name: '증명서 발급 신청 관리', path: '/adminCertRequest' }
+      {
+        name: '증명서 발급 신청 관리',
+        path: '/adminCertRequest',
+        notiTypes: ['CERTISSUE']
+      }
     ]
   },
   {
     name: '자산 관리',
     icon: faDesktop,
     authGroups: ['ROLE_GA_ADMIN'],
+    notiTypes: ['SUPPLY'],
     subItems: [
       { name: '비품 관리', path: '/adminSupply' },
-      { name: '비품 신청 관리', path: '/adminSupplyRequest' },
+      {
+        name: '비품 신청 관리',
+        path: '/adminSupplyRequest',
+        notiTypes: ['SUPPLY']
+      },
       { name: '비품 대여이력 관리', path: '/adminSupplyRental' },
       { name: '회의실 관리', path: '/adminMeetingRoom' },
     ]
@@ -123,32 +142,53 @@ const adminMenuItems = [
   {
     name: '인사 관리',
     icon: faAddressCard,
+    authGroups: ['ROLE_HR_ADMIN'],
+    notiTypes: ['SIGNUP', 'OVERTIME', 'CHECKOUT'],
     subItems: [
       { name: '직원 관리', path: '/adminUsers' },
       { name: '부서 관리', path: '/adminDepartments' },
       { name: '직급 관리', path: '/adminRank' },
-      { name: '회원가입 관리', path: '/adminSignup' },
-      { name: '근태 관리', path: '/adminAttendance' },
+      {
+        name: '회원가입 관리',
+        path: '/adminSignup',
+        notiTypes: ['SIGNUP']
+      },
+      {
+        name: '근태 관리',
+        path: '/adminAttendance',
+        notiTypes: ['OVERTIME', 'CHECKOUT']
+      },
       { name: '연차 관리', path: '/adminLeave' }
     ]
   },
   {
     name: '자산 관리',
     icon: faDesktop,
+    authGroups: ['ROLE_GA_ADMIN'],
+    notiTypes: ['SUPPLY'],
     subItems: [
       { name: '비품 관리', path: '/adminSupply' },
-      { name: '비품 신청 관리', path: '/adminSupplyRequest' },
+      {
+        name: '비품 신청 관리',
+        path: '/adminSupplyRequest',
+        notiTypes: ['SUPPLY']
+      },
       { name: '비품 대여이력 관리', path: '/adminSupplyRental' },
-      { name: '회의실 관리', path: '/adminMeetingRoom' }
+      { name: '회의실 관리', path: '/adminMeetingRoom' },
     ]
   },
   {
     name: '증명서 관리',
     icon: faClipboardCheck,
     authGroups: ['ROLE_HR_ADMIN'],
+    notiTypes: ['CERTISSUE'],
     subItems: [
       { name: '증명서 유형 관리', path: '/adminCertType' },
-      { name: '증명서 발급 신청 관리', path: '/adminCertRequest' }
+      {
+        name: '증명서 발급 신청 관리',
+        path: '/adminCertRequest',
+        notiTypes: ['CERTISSUE']
+      }
     ]
   },
   {
@@ -253,6 +293,19 @@ const Sidebar = ({ isOpen, onClose }) => {
   const userAuthGroups = user?.user_auth_group ?? [];
   const allUserGroups = [user?.auth_group, ...userAuthGroups].filter(Boolean);
   const isSuperAdmin = allUserGroups.includes("ROLE_SUPER_ADMIN");
+  const adminNotificationTypes = [
+    'SIGNUP',
+    'OVERTIME',
+    'CHECKOUT',
+    'CERTISSUE',
+    'SUPPLY'
+  ];
+
+  const hasUnreadAdminNotification = notifications.some(
+    noti =>
+      noti.read_yn === 'N' &&
+      adminNotificationTypes.includes(noti.noti_type)
+  );
 
   const hasMenuAccess = (item) => {
     if (isAdminMode) {
@@ -454,13 +507,17 @@ const Sidebar = ({ isOpen, onClose }) => {
                   setOpenMenuName(null);
                   navi(nextAdminMode ? '/adminMain' : '/main');
                 }}
-                className={`flex items-center justify-center gap-2 w-full px-2 py-2 text-xs font-bold hover:border-[#3530B8] transition-colors cursor-pointer border rounded-lg
+                className={`relative flex items-center justify-center gap-2 w-full px-2 py-2 text-xs font-bold hover:border-[#3530B8] transition-colors cursor-pointer border rounded-lg
                   ${isAdminMode
                     ? ' text-white bg-[#3530B8]'
                     : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:text-[#3530B8]'}`}
               >
                 <FontAwesomeIcon icon={isAdminMode ? faSliders : faUserShield} className="text-sm" />
                 {isAdminMode ? '일반 사내페이지 전환' : '관리자페이지 전환'}
+
+                {!isAdminMode && hasUnreadAdminNotification && (
+                  <span className='absolute top-1.5 right-2 w-2 h-2 rounded-full bg-red-500' />
+                )}
               </button>
             )}
 
