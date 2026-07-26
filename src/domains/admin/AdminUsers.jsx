@@ -28,6 +28,10 @@ const AdminUsers = () => {
   const isOpsManager =
     user?.auth_group === 'ROLE_SUPER_ADMIN' ||
     userAuthGroups.includes('ROLE_SUPER_ADMIN');
+  // [수정] 인사 관리자도 퇴사 처리된 직원 관리 가능하도록 변경
+  const isHRManager =
+    user?.auth_group === 'ROLE_HR_ADMIN' ||
+    userAuthGroups.includes('ROLE_HR_ADMIN');
   const [employees, setEmployees] = useState([]);
   const [personalRoles, setPersonalRoles] = useState([]);
   const [editRoles, setEditRoles] = useState([]);
@@ -272,8 +276,8 @@ const AdminUsers = () => {
                 setCurrentPage(1);
               }}
               className={`flex-1 justify-center px-2.5 lg:px-4 py-2 text-[0.6875rem] lg:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${activeTab === tab
-                  ? 'bg-[#3530B8] text-white shadow-md'
-                  : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
+                ? 'bg-[#3530B8] text-white shadow-md'
+                : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
                 }`}
             >
               {tab} <span className={`ml-1 ${activeTab === tab ? 'opacity-80' : 'text-gray-400'}`}>({statusCounts[tab]})</span>
@@ -353,8 +357,8 @@ const AdminUsers = () => {
                       <td className="py-1 sm:py-4 pl-1 sm:pl-0 text-[10px] text-slate-400 font-mono inline-block sm:table-cell sm:text-left whitespace-nowrap align-baseline sm:align-middle">
                         {emp.id}
                         <span className={`inline sm:hidden ml-2 px-1.5 py-0.5 rounded-full text-[9px] font-semibold text-center ${getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' :
-                            getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
-                              'bg-[#FFF0F0] text-[#FF4D4F]'
+                          getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                            'bg-[#FFF0F0] text-[#FF4D4F]'
                           }`}>
                           {getStatusLabel(emp.status)}
                         </span>
@@ -373,8 +377,8 @@ const AdminUsers = () => {
 
                       <td className="hidden sm:table-cell py-1 sm:py-4 pl-4 sm:pl-0 text-left sm:text-center sm:align-middle">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${getStatusLabel(emp.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' :
-                            getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
-                              'bg-[#FFF0F0] text-[#FF4D4F]'
+                          getStatusLabel(emp.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                            'bg-[#FFF0F0] text-[#FF4D4F]'
                           }`}>
                           {getStatusLabel(emp.status)}
                         </span>
@@ -436,7 +440,7 @@ const AdminUsers = () => {
                               퇴사
                             </button>
                           </div>
-                        ) : (getStatusLabel(emp.status) !== '퇴사' || isOpsManager) ? (
+                        ) : (getStatusLabel(emp.status) !== '퇴사' || isOpsManager || isHRManager) ? (
                           <button
                             type="button"
                             onClick={(e) => {
@@ -529,8 +533,8 @@ const AdminUsers = () => {
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">재직 상태</span>
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-center whitespace-nowrap ${getStatusLabel(selectedUser.status) === '재직' ? 'bg-[#F0FDF4] text-[#10B981]' :
-                          getStatusLabel(selectedUser.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
-                            'bg-[#FFF0F0] text-[#FF4D4F]'}`}>
+                        getStatusLabel(selectedUser.status) === '휴직' ? 'bg-[#FFF9F0] text-[#FF9800]' :
+                          'bg-[#FFF0F0] text-[#FF4D4F]'}`}>
                         {getStatusLabel(selectedUser.status)}
                       </span>
                     </div>
@@ -660,8 +664,8 @@ const AdminUsers = () => {
                           </div>
                         ) : (
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold whitespace-nowrap ${selectedUser.is_hr_manager === 'Y'
-                              ? 'bg-[#EEF2FF] text-[#3530B8]'
-                              : 'bg-slate-100 text-slate-400'
+                            ? 'bg-[#EEF2FF] text-[#3530B8]'
+                            : 'bg-slate-100 text-slate-400'
                             }`}>
                             {selectedUser.is_hr_manager === 'Y' ? '✓ 담당자' : '해당 없음'}
                           </span>
@@ -707,7 +711,7 @@ const AdminUsers = () => {
                         <div className="flex gap-1.5 flex-wrap justify-end">
                           {personalRoles.length === 0 ? (
                             <span className="w-20 text-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-400">
-                              일반 부서
+                              개인 권한 없음
                             </span>
                           ) : (
                             personalRoles.map(r => (
@@ -772,7 +776,7 @@ const AdminUsers = () => {
                     className="flex-1 py-3 bg-white border border-slate-200 text-slate-500 text-sm font-bold rounded-xl hover:bg-slate-50 transition-all">
                     닫기
                   </button>
-                  {(getStatusLabel(selectedUser.status) !== '퇴사' || isOpsManager) && (
+                  {(getStatusLabel(selectedUser.status) !== '퇴사' || isOpsManager || isHRManager) && (
                     <button
                       onClick={handleDetailEdit}
                       className="flex-[2] py-3 bg-[#3530B8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3530B8]/20 hover:bg-[#2a2696] transition-all">
