@@ -414,21 +414,24 @@ const ApprovalMyPage = () => {
 
   return (
     <div className="flex-1 bg-white flex flex-col h-full min-h-0 overflow-hidden">
-        <div className="shrink-0 py-8 px-5 md:px-9 pb-6">
-          <h1 className="text-xl md:text-2xl font-bold text-[#121331] tracking-tight">{currentPageInfo?.page_name}</h1>
-          <p className="text-xs md:text-sm text-[#8a92a6] mt-1">{currentPageInfo?.page_info}</p>
-        </div>
+      <div className="shrink-0 py-8 px-5 md:px-9 pb-6">
+        <h1 className="text-xl md:text-2xl font-bold text-[#121331] tracking-tight">{currentPageInfo?.page_name}</h1>
+        <p className="text-xs md:text-sm text-[#8a92a6] mt-1">{currentPageInfo?.page_info}</p>
+      </div>
 
       <div className="flex-1 min-h-0 px-1 md:px-7 pb-8 overflow-hidden">
         <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-[#edf2f9] p-3 md:p-8 flex flex-col h-full min-h-0 overflow-hidden">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 shrink-0">
-            <div className="flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-x-auto custom-scrollbar">
+            <div className="grid grid-cols-4 md:flex bg-white rounded-2xl shadow-sm border border-[#edf2f9] p-1 w-full md:w-fit items-center flex-shrink-0 overflow-hidden">
               {tabs.map(tab => (
                 <button
                   key={tab.status}
                   type="button"
                   onClick={() => handleTabChange(tab.status)}
-                  className={`flex-1 md:flex-none px-2 md:px-6 py-1.5 rounded-xl text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status ? 'bg-[#3530B8] text-white shadow-sm' : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'}`}
+                  className={`min-w-0 px-1 md:px-6 py-1.5 rounded-xl text-[10px] sm:text-[11px] md:text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.status
+                      ? 'bg-[#3530B8] text-white shadow-sm'
+                      : 'bg-white text-[#8a92a6] hover:bg-[#F0F4FF] hover:text-[#3530B8]'
+                    }`}
                 >
                   {tab.label}
                   <span className="ml-1.5">({tab.count})</span>
