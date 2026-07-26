@@ -119,6 +119,11 @@ export const connectSocket = (usersId) => {
                             showToast(noti.content, "🧑‍💼");
                             break;
 
+                        // 연장근무 신청 알림
+                        case "OVERTIME":
+                            showToast(noti.content, "⏳");
+                            break;
+
                         default:
                             showToast(noti.content);
                     }

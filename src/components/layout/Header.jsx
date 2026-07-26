@@ -33,7 +33,8 @@ const Header = ({ onMenuClick }) => {
     CERTISSUE: "[증명서 발급 신청]",
     CERTISSUE_APPROVED: "[증명서 발급 신청 승인]",
     CERTISSUE_REJECTED: "[증명서 발급 신청 반려]",
-    SIGNUP: "[회원가입 신청]"
+    SIGNUP: "[회원가입 신청]",
+    OVERTIME: "[연장근무 신청]"
   };
 
   // 타입별 라벨 색상
@@ -52,6 +53,7 @@ const Header = ({ onMenuClick }) => {
     CERTISSUE_APPROVED: "text-green-600",
     CERTISSUE_REJECTED: "text-red-600",
     SIGNUP: "text-indigo-600",
+    OVERTIME: "text-cyan-600",
   };
 
   // 타입별 점(dot) 색상
@@ -70,6 +72,7 @@ const Header = ({ onMenuClick }) => {
     CERTISSUE_APPROVED: "bg-green-500",
     CERTISSUE_REJECTED: "bg-red-500",
     SIGNUP: "bg-indigo-500",
+    OVERTIME: "bg-cyan-600",
   };
 
   useEffect(() => {
@@ -168,6 +171,11 @@ const Header = ({ onMenuClick }) => {
         // 회원가입 신청 알림
         case "SIGNUP":
           navi(`/adminSignup`);
+          break;
+
+        // 연장 근무 신청 알림
+        case "OVERTIME":
+          navi(`/adminAttendance?tab=overtime`)
           break;
 
         default:

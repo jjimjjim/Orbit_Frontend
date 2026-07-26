@@ -6,9 +6,15 @@ import { approveCheckout, approveOvertime, getAllCheckoutRQ, getAllOvertimeRQ, r
 import useUserStore from '../../store/userStore';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import { useSearchParams } from 'react-router-dom';
 
 const AdminAttendance = () => {
-  const [activePageTab, setActivePageTab] = useState('근무시간 정정');
+  // 연장 근무, 퇴근 정정 시간 알림 클릭 시 각 페이지로 가게 하기 위해 추가
+  const [searchParams] = useSearchParams();
+  // const [activePageTab, setActivePageTab] = useState('근무시간 정정'); -> 아래 로직으로 수정
+  const [activePageTab, setActivePageTab] = useState(() =>
+    searchParams.get('tab') === 'overtime' ? '연장근무 관리' : '근무시간 정정');
+  
   const [activeStatusTab, setActiveStatusTab] = useState('전체');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -155,8 +161,8 @@ const AdminAttendance = () => {
               key={tab}
               onClick={() => handlePageTabClick(tab)}
               className={`px-4 py-2 text-sm font-bold transition-all relative whitespace-nowrap ${activePageTab === tab
-                  ? 'text-[#3530B8]'
-                  : 'text-gray-400 hover:text-[#3530B8]'
+                ? 'text-[#3530B8]'
+                : 'text-gray-400 hover:text-[#3530B8]'
                 }`}
             >
               {tab}
@@ -173,8 +179,8 @@ const AdminAttendance = () => {
               key={tab}
               onClick={() => handleStatusTabClick(tab)}
               className={`px-3 md:px-4 py-2 text-[0.6875rem] md:text-sm font-semibold rounded-xl transition-all whitespace-nowrap ${activeStatusTab === tab
-                  ? 'bg-[#3530B8] text-white shadow-md'
-                  : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
+                ? 'bg-[#3530B8] text-white shadow-md'
+                : 'text-gray-500 hover:text-[#3530B8] hover:bg-[#F0F4FF]'
                 }`}
             >
               {tab} <span className={`ml-1 ${activeStatusTab === tab ? 'opacity-80' : 'text-gray-400'}`}>({tabCount[tabKeyMap[tab]]})</span>
