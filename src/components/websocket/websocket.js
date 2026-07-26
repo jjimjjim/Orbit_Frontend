@@ -124,6 +124,11 @@ export const connectSocket = (usersId) => {
                             showToast(noti.content, "⏳");
                             break;
 
+                        // 근무시간 정정 신청 알림
+                        case "CHECKOUT":
+                            showToast(noti.content, "🕒");
+                            break;
+
                         default:
                             showToast(noti.content);
                     }

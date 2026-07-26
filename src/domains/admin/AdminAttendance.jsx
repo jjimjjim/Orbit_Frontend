@@ -10,11 +10,11 @@ import { useSearchParams } from 'react-router-dom';
 
 const AdminAttendance = () => {
   // 연장 근무, 퇴근 정정 시간 알림 클릭 시 각 페이지로 가게 하기 위해 추가
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // const [activePageTab, setActivePageTab] = useState('근무시간 정정'); -> 아래 로직으로 수정
   const [activePageTab, setActivePageTab] = useState(() =>
     searchParams.get('tab') === 'overtime' ? '연장근무 관리' : '근무시간 정정');
-  
+
   const [activeStatusTab, setActiveStatusTab] = useState('전체');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -79,6 +79,12 @@ const AdminAttendance = () => {
     setActivePageTab(tab);
     setActiveStatusTab('전체');
     setPage(1);
+
+    if (tab === '연장근무 관리') {
+      setSearchParams({ tab: 'overtime' });
+    } else {
+      setSearchParams({});
+    }
   }
 
   const handleCheckoutApp = async (seq) => {
