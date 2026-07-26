@@ -114,6 +114,11 @@ export const connectSocket = (usersId) => {
                             showToast(noti.content, "❌");
                             break;
 
+                        // 회원가입 신청 알림
+                        case "SIGNUP":
+                            showToast(noti.content, "🧑‍💼");
+                            break;
+
                         default:
                             showToast(noti.content);
                     }
