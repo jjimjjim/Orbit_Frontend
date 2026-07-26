@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { idDuplCheck, emailDuplCheck } from '../../domains/auth/authApi'; 
-import { registerUser } from './adminApi'; 
+import { idDuplCheck, emailDuplCheck } from '../../domains/auth/authApi';
+import { registerUser } from './adminApi';
 import { alertConfirm, alertSuccess, alertError } from '../../utils/alert';
-import { IMAGES } from '../../images/images'; 
+import { IMAGES } from '../../images/images';
 
 const initialForm = {
   name: '',
@@ -46,7 +46,7 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
 
   const handleChange = (field, value) => {
     let finalValue = value;
-    
+
     if (field === 'hire_date') {
       const onlyNums = value.replace(/[^\d]/g, '').slice(0, 8);
       if (onlyNums.length <= 4) {
@@ -72,11 +72,24 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
     }
   };
 
+  // [수정] Signup.jsx 기준 정규표현식으로 맞춰 수정
+  const nameRegex = /^([가-힣]{2,5}|[a-zA-Z]{2,10})$/;
+  const idRegex = /^[A-Za-z\d_]{5,15}$/;
+  const pwRegex = /^[A-Za-z\d!@#$%^&*]{8,20}$/;
+  const emailRegex = /^[A-Za-z0-9._%+-]{1,20}@[a-z]+\.[a-z]{3}$/;
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
   const handleIdCheck = () => {
+    // [수정] Signup.jsx 기준 정규표현식 적용 및 중복확인 버튼 클릭 시 중복확인 요청 에러 메시지 즉시 해제
     if (!form.id.trim()) {
       setErrors(prev => ({ ...prev, id: '아이디를 입력해주세요.' }));
       return;
     }
+    if (!idRegex.test(form.id)) {
+      setErrors(prev => ({ ...prev, id: '영문 대/소문자와 _로 5~15자 입력 가능합니다.' }));
+      return;
+    }
+    setErrors(prev => ({ ...prev, id: '' }));
     idDuplCheck(form.id).then(resp => {
       // 서버 응답 형태에 맞게 조정 (예: resp.data === true 면 중복)
       const isDuplicate = resp.data === true || resp.data?.duplicate === true;
@@ -94,11 +107,16 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
   };
 
   const handleEmailCheck = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(form.email)) {
-      setErrors(prev => ({ ...prev, email: '올바른 이메일 형식을 입력해주세요.' }));
+    // [수정] Signup.jsx 기준 정규표현식 적용 및 중복확인 버튼 클릭 시 중복확인 요청 에러 메시지 즉시 해제
+    if (!form.email.trim()) {
+      setErrors(prev => ({ ...prev, email: '이메일 주소를 입력해주세요.' }));
       return;
     }
+    if (!emailRegex.test(form.email)) {
+      setErrors(prev => ({ ...prev, email: 'example@email.com 등 알맞은 형식으로 입력해주세요.' }));
+      return;
+    }
+    setErrors(prev => ({ ...prev, email: '' }));
     emailDuplCheck(form.email).then(resp => {
       const isDuplicate = resp.data === true || resp.data?.duplicate === true;
       if (isDuplicate) {
@@ -115,71 +133,110 @@ const RegisterUserModal = ({ isOpen, onClose, onSuccess, deptList = [], rankList
   };
 
   const validate = () => {
+    // [수정] Signup.jsx 기준 입력 항목별 정규표현식 검증 및 에러 메시지 동기화 (입사일자 유효성 검증 포함)
     const newErrors = {};
-    if (!form.name.trim() || form.name.length > 6) newErrors.name = '이름을 1~6자 사이로 입력해주세요.';
-    if (!form.id.trim()) newErrors.id = '아이디를 입력해주세요.';
-    else if (!idChecked) newErrors.id = '아이디 중복확인을 진행해주세요.';
-    if (!form.pw || form.pw.length < 8) newErrors.pw = '비밀번호는 8자 이상 입력해주세요.';
-    if (form.pw !== form.pwConfirm) newErrors.pwConfirm = '비밀번호가 일치하지 않습니다.';
-    if (!form.email.trim()) newErrors.email = '이메일을 입력해주세요.';
-    else if (!emailChecked) newErrors.email = '이메일 중복확인을 진행해주세요.';
+    if (!form.name.trim()) {
+      newErrors.name = '이름을 입력해주세요.';
+    } else if (!nameRegex.test(form.name)) {
+      newErrors.name = '한글은 2~5자, 영어는 2~10자까지 입력 가능합니다.';
+    }
+
+    if (!form.id.trim()) {
+      newErrors.id = '아이디를 입력해주세요.';
+    } else if (!idRegex.test(form.id)) {
+      newErrors.id = '영문 대/소문자와 _로 5~15자 입력 가능합니다.';
+    } else if (!idChecked) {
+      newErrors.id = '아이디 중복확인을 해주세요.';
+    }
+
+    if (!form.pw) {
+      newErrors.pw = '비밀번호를 입력해주세요.';
+    } else if (!pwRegex.test(form.pw)) {
+      newErrors.pw = '영문 대/소문자와 숫자, 특수문자(!@#$%^&*)로 8~20자 입력 가능합니다.';
+    }
+
+    if (!form.pwConfirm) {
+      newErrors.pwConfirm = '비밀번호를 한 번 더 입력해주세요.';
+    } else if (form.pw !== form.pwConfirm) {
+      newErrors.pwConfirm = '비밀번호가 일치하지 않습니다.';
+    }
+
+    if (!form.email.trim()) {
+      newErrors.email = '이메일 주소를 입력해주세요.';
+    } else if (!emailRegex.test(form.email)) {
+      newErrors.email = 'example@email.com 등 알맞은 형식으로 입력해주세요.';
+    } else if (!emailChecked) {
+      newErrors.email = '이메일 중복확인을 해주세요.';
+    }
 
     if (!form.dept_seq) newErrors.dept_seq = '부서를 선택해주세요.';
     if (!form.rank_seq) newErrors.rank_seq = '직급을 선택해주세요.';
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
     if (!form.hire_date.trim()) {
       newErrors.hire_date = '입사일자를 입력해주세요.';
     } else if (!dateRegex.test(form.hire_date)) {
-      newErrors.hire_date = 'YYYY-MM-DD 형식으로 입력해주세요.';
+      newErrors.hire_date = 'YYYYMMDD 형식으로 입력해주세요.';
+    } else {
+      const [yy, mm, dd] = form.hire_date.split('-').map(Number);
+      const dateObj = new Date(yy, mm - 1, dd);
+      const isRealDate = (
+        !isNaN(dateObj.getTime()) &&
+        dateObj.getFullYear() === yy &&
+        dateObj.getMonth() + 1 === mm &&
+        dateObj.getDate() === dd
+      );
+      if (!isRealDate || yy < 1900) {
+        newErrors.hire_date = '존재하지 않는 날짜입니다.';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-const handleSubmit = () => {
-  if (!validate()) return;
+  const handleSubmit = () => {
+    if (!validate()) return;
 
-  alertConfirm('직원 등록', '입력한 정보로 직원을 등록하시겠습니까?').then(async (result) => {
-    if (!result.isConfirmed) return;
+    alertConfirm('직원 등록', '입력한 정보로 직원을 등록하시겠습니까?').then(async (result) => {
+      if (!result.isConfirmed) return;
 
-    setSubmitting(true);
-    try {
-      // 기본 프로필(6번) 이미지를 실제 파일로 변환
-      const response = await fetch(IMAGES.DEFAULT6);
-      const blob = await response.blob();
-      const profileFile = new File([blob], 'Default6.png', { type: blob.type });
+      setSubmitting(true);
+      try {
+        // 기본 프로필(6번) 이미지를 실제 파일로 변환
+        const response = await fetch(IMAGES.DEFAULT6);
+        const blob = await response.blob();
+        const profileFile = new File([blob], 'Default6.png', { type: blob.type });
 
-      const inputData = {
-        name: form.name,
-        id: form.id,
-        pw: form.pw,
-        email: form.email,
-        dept_seq: form.dept_seq,
-        rank_seq: form.rank_seq,
-        hire_date: form.hire_date,
-      };
+        const inputData = {
+          name: form.name,
+          id: form.id,
+          pw: form.pw,
+          email: form.email,
+          dept_seq: form.dept_seq,
+          rank_seq: form.rank_seq,
+          hire_date: form.hire_date,
+        };
 
-      const formData = new FormData();
-      formData.append(
-        'input',
-        new Blob([JSON.stringify(inputData)], { type: 'application/json' })
-      );
-      formData.append('file', profileFile);
+        const formData = new FormData();
+        formData.append(
+          'input',
+          new Blob([JSON.stringify(inputData)], { type: 'application/json' })
+        );
+        formData.append('file', profileFile);
 
-      await registerUser(formData);
+        await registerUser(formData);
 
-      alertSuccess('등록 완료', '직원이 성공적으로 등록되었습니다.');
-      onSuccess?.();
-      handleClose();
-    } catch (err) {
-      console.error(err);
-      alertError('오류 발생', '직원 등록 중 오류가 발생했습니다.');
-    } finally {
-      setSubmitting(false);
-    }
-  });
-};
+        alertSuccess('등록 완료', '직원이 성공적으로 등록되었습니다.');
+        onSuccess?.();
+        handleClose();
+      } catch (err) {
+        console.error(err);
+        alertError('오류 발생', '직원 등록 중 오류가 발생했습니다.');
+      } finally {
+        setSubmitting(false);
+      }
+    });
+  };
 
   const handleClose = () => {
     setForm(initialForm);
@@ -211,11 +268,12 @@ const handleSubmit = () => {
           {/* 이름 */}
           <div>
             <label className="text-xs text-slate-500 font-semibold mb-1.5 block">이름</label>
+            {/* [수정] 이름 정규표현식(영문 최대 10자)에 맞추어 maxLength 10으로 수정 */}
             <input
               type="text"
               value={form.name}
               onChange={(e) => handleChange('name', e.target.value)}
-              maxLength={6}
+              maxLength={10}
               className={`w-full px-3 py-2.5 bg-white border ${errors.name ? 'border-red-400' : 'border-gray-200'} rounded-xl text-sm outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all`}
             />
             {errors.name && <p className="text-[0.6875rem] text-red-500 mt-1">{errors.name}</p>}
@@ -296,7 +354,7 @@ const handleSubmit = () => {
           <div>
             <label className="text-xs text-slate-500 font-semibold mb-1.5 block">부서</label>
             <div className="relative custom-dropdown">
-              <div 
+              <div
                 onClick={() => {
                   setIsDeptOpen(!isDeptOpen);
                   setIsRankOpen(false);
@@ -313,12 +371,12 @@ const handleSubmit = () => {
               {isDeptOpen && (
                 <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                   {deptList.map(dept => (
-                    <div 
+                    <div
                       key={dept.dept_seq}
-                      onClick={() => { 
+                      onClick={() => {
                         setForm(prev => ({ ...prev, dept_seq: dept.dept_seq, dept_name: dept.dept_name }));
                         setErrors(prev => ({ ...prev, dept_seq: '' }));
-                        setIsDeptOpen(false); 
+                        setIsDeptOpen(false);
                       }}
                       className="px-3 py-2 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0 text-slate-700"
                     >
@@ -335,7 +393,7 @@ const handleSubmit = () => {
           <div>
             <label className="text-xs text-slate-500 font-semibold mb-1.5 block">직급</label>
             <div className="relative custom-dropdown">
-              <div 
+              <div
                 onClick={() => {
                   setIsRankOpen(!isRankOpen);
                   setIsDeptOpen(false);
@@ -352,12 +410,12 @@ const handleSubmit = () => {
               {isRankOpen && (
                 <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
                   {rankList.map(rank => (
-                    <div 
+                    <div
                       key={rank.rank_seq}
-                      onClick={() => { 
+                      onClick={() => {
                         setForm(prev => ({ ...prev, rank_seq: rank.rank_seq, rank_name: rank.rank_name }));
                         setErrors(prev => ({ ...prev, rank_seq: '' }));
-                        setIsRankOpen(false); 
+                        setIsRankOpen(false);
                       }}
                       className="px-3 py-2 text-xs hover:bg-[#F0F4FF] hover:text-[#3530B8] cursor-pointer font-bold border-b border-gray-50 last:border-0 text-slate-700"
                     >
@@ -377,7 +435,7 @@ const handleSubmit = () => {
               type="text"
               value={form.hire_date}
               onChange={(e) => handleChange('hire_date', e.target.value)}
-              placeholder="YYYY-MM-DD 형식으로 입력해주세요"
+              placeholder="YYYYMMDD 형식으로 입력해주세요"
               className={`w-full px-3 py-2.5 bg-white border ${errors.hire_date ? 'border-red-400' : 'border-gray-200'} rounded-xl text-sm outline-none focus:border-[#3530B8] focus:ring-4 focus:ring-[#3530B8]/5 transition-all placeholder:text-gray-300`}
             />
             {errors.hire_date && <p className="text-[0.6875rem] text-red-500 mt-1">{errors.hire_date}</p>}
