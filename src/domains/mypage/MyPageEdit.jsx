@@ -127,6 +127,7 @@ const MyPageEdit = () => {
           zonecode: resp.data.zonecode || '',
           address1: resp.data.address1 || '',
           address2: resp.data.address2 || '',
+          ssn: ''
         });
         setIsEmailChecked(true);
       }).catch(err => console.log("내정보 불러오기 실패", err));
@@ -203,25 +204,34 @@ const MyPageEdit = () => {
     setErrors({});
     const newErrors = {};
 
-    if (formData.email && !emailRegex.test(formData.email)) {
+    const email = formData.email?.trim() || '';
+
+    if (!email) {
+      newErrors.email = '이메일을 입력해 주세요.';
+    } else if (formData.email && !emailRegex.test(formData.email)) {
       newErrors.email = 'example@email.com 등 알맞은 형식으로 입력해주세요.';
-    }
-    if (!isEmailChecked) {
+    } else if (!isEmailChecked) {
       newErrors.emailCheck = '이메일 중복 확인이 필요합니다.';
     }
-    if (formData.phone && !phoneRegex.test(formData.phone)) {
+
+    if (!formData.phone || !formData.phone.trim()) {
+      newErrors.phone = '휴대전화 번호를 입력해 주세요.';
+    } else if (formData.phone && !phoneRegex.test(formData.phone)) {
       newErrors.phone = '010-0000-0000 형식으로 입력해주세요.';
     }
+
     if (!formData.address2 || !formData.address2.trim()) {
       newErrors.address2 = '상세주소를 입력해주세요.';
     }
 
-    if (!formData.ssn) {
-      newErrors.ssn = '주민등록번호를 입력해주세요.';
-    } else if (!ssnRegex.test(formData.ssn)) {
-      newErrors.ssn = '앞자리(6자)-뒷자리(7자) 형식으로 입력해주세요.';
-    } else if (!isValidSSN(formData.ssn)) {
-      newErrors.ssn = '올바른 주민등록번호가 아닙니다.';
+    if (!isSsnRegistered) {
+      if (!formData.ssn) {
+        newErrors.ssn = '주민등록번호를 입력해주세요.';
+      } else if (!ssnRegex.test(formData.ssn)) {
+        newErrors.ssn = '앞자리(6자)-뒷자리(7자) 형식으로 입력해주세요.';
+      } else if (!isValidSSN(formData.ssn)) {
+        newErrors.ssn = '올바른 주민등록번호가 아닙니다.';
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -230,7 +240,12 @@ const MyPageEdit = () => {
     }
 
     try {
-      await updateUserInfo(formData);
+      const requestData = {
+        ...formData,
+        ssn: isSsnRegistered ? null : formData.ssn
+      };
+
+      await updateUserInfo(requestData);
 
       let newProfileSysname = profileData?.sysname || '';
       let newSysname = profileData?.stamp_sysname || '';
@@ -251,6 +266,16 @@ const MyPageEdit = () => {
       const freshProfile = await getProfileInfo();
 
       setProfileData(freshProfile.data);
+
+      setFormData({
+        email: freshProfile.data.email || '',
+        phone: freshProfile.data.phone || '',
+        zonecode: freshProfile.data.zonecode || '',
+        address1: freshProfile.data.address1 || '',
+        address2: freshProfile.data.address2 || '',
+        ssn: ''
+      });
+
       setUser({
         ...user,
         ...freshProfile.data,
@@ -508,7 +533,7 @@ const MyPageEdit = () => {
               {/* 주민등록번호 */}
               <div style={{ ...infoRowStyle, minHeight: '2.8rem' }} className="info-row">
                 <label style={labelStyle} className="info-label">주민등록번호</label>
-                {isEditing ? (
+                {isEditing && !isSsnRegistered ? (
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <input
                       type="text"
@@ -522,7 +547,21 @@ const MyPageEdit = () => {
                     {errors.ssn && <span style={{ fontSize: '0.7rem', color: '#EF4444', marginTop: '2px' }}>{errors.ssn}</span>}
                   </div>
                 ) : (
-                  <span style={valueStyle} className="info-value">{profileData?.ssn_masked || '미등록'}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+                    <span style={valueStyle} className='info-value'>
+                      {profileData?.ssn_masked || '미등록'}
+                    </span>
+                    {isEditing && isSsnRegistered && (
+                      <span style={{
+                        fontSize: '0.68rem',
+                        color: '#94A3B8',
+                        marginLeft: '0.8rem',
+                        marginTop: '-0.3rem'
+                      }}>
+                        주민등록번호는 최초 등록 후 변경할 수 없습니다.
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
