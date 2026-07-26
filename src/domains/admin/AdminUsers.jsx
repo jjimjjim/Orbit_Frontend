@@ -47,6 +47,8 @@ const AdminUsers = () => {
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [nameError, setNameError] = useState(false); // 이름 오류 상태 추가
+  // [수정] 입사일 수정 시 유효성 검사 오류 메시지를 관리하는 상태 추가
+  const [hireDateError, setHireDateError] = useState('');
   // 커스텀 드롭다운 상태 관리
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const [isRankOpen, setIsRankOpen] = useState(false);
@@ -176,9 +178,12 @@ const AdminUsers = () => {
       rank_seq: selectedUser.rank_seq,
       role: selectedUser.role,
       is_hr_manager: selectedUser.is_hr_manager || 'N',
+      // [수정] 상세 정보 수정 시 입사일 데이터를 폼에 포함
+      hire_date: selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : '',
     });
 
     setNameError(false); // 수정 시작 시 에러 초기화
+    setHireDateError('');
     setIsDeptOpen(false);
     setIsRankOpen(false);
     setEditRoles(personalRoles);
@@ -186,12 +191,43 @@ const AdminUsers = () => {
   };
 
   // 상세 정보 저장
+  // [수정] 입사일자 유효성 검증 추가
   const handleDetailSave = () => {
+    let hasError = false;
     if (!editForm.name.trim()) {
       setNameError(true);
-      return;
+      hasError = true;
+    } else {
+      setNameError(false);
     }
-    setNameError(false);
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    let hError = '';
+    if (!editForm.hire_date || !String(editForm.hire_date).trim()) {
+      hError = '입사일자를 입력해주세요.';
+    } else if (!dateRegex.test(editForm.hire_date)) {
+      hError = 'YYYYMMDD 형식으로 입력해주세요.';
+    } else {
+      const [yy, mm, dd] = editForm.hire_date.split('-').map(Number);
+      const dateObj = new Date(yy, mm - 1, dd);
+      const isRealDate = (
+        !isNaN(dateObj.getTime()) &&
+        dateObj.getFullYear() === yy &&
+        dateObj.getMonth() + 1 === mm &&
+        dateObj.getDate() === dd
+      );
+      if (!isRealDate || yy < 1900) {
+        hError = '존재하지 않는 날짜입니다.';
+      }
+    }
+    if (hError) {
+      setHireDateError(hError);
+      hasError = true;
+    } else {
+      setHireDateError('');
+    }
+
+    if (hasError) return;
 
     alertConfirm('직원 정보 수정', '직원 상세 정보를 수정하시겠습니까?').then((result) => {
       if (result.isConfirmed) {
@@ -251,7 +287,7 @@ const AdminUsers = () => {
     <div ref={containerRef} className={`h-full flex flex-col bg-white font-sans ${selectedUser ? 'p-0 lg:p-8' : 'p-6 lg:p-8'}`}>
 
       {/* [1] 헤더 영역 */}
-      {/* [수정] 모바일 화면에서 +직원 등록 버튼 화면 이탈 방지를 위해 세로 배치(flex-col) 및 페이지 설명 우측 하단으로 정렬 */}
+      {/* [수정] 모바일 화면에서 +직원 등록 버튼 화면 이탈 방지를 위해 세로 배치 및 페이지 설명 우측 하단으로 정렬 */}
       <div className={`mb-6 flex-shrink-0 flex flex-col lg:flex-row lg:items-end justify-between gap-3 lg:gap-4 ${selectedUser ? 'hidden lg:flex' : 'flex'}`}>
         <div className="w-full lg:w-auto">
           <h1 className="text-[1.5rem] font-bold text-slate-900 mb-1 tracking-tight">{currentPageInfo?.page_name}</h1>
@@ -724,9 +760,38 @@ const AdminUsers = () => {
                       )}
                     </div>
 
+                    {/* [수정] 입사일 수정 가능하도록 변경 */}
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-500 min-w-[80px] whitespace-nowrap">입사일</span>
-                      <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : '-'}</span>
+                      {isDetailEditing ? (
+                        <div className="flex flex-col items-end w-full">
+                          <input
+                            type="text"
+                            value={editForm.hire_date || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              const onlyNums = value.replace(/[^\d]/g, '').slice(0, 8);
+                              let finalValue = onlyNums;
+                              if (onlyNums.length <= 4) {
+                                finalValue = onlyNums;
+                              } else if (onlyNums.length <= 6) {
+                                finalValue = `${onlyNums.slice(0, 4)}-${onlyNums.slice(4)}`;
+                              } else {
+                                finalValue = `${onlyNums.slice(0, 4)}-${onlyNums.slice(4, 6)}-${onlyNums.slice(6)}`;
+                              }
+                              setEditForm(prev => ({ ...prev, hire_date: finalValue }));
+                              if (hireDateError) setHireDateError('');
+                            }}
+                            placeholder="YYYYMMDD 형식으로 입력해주세요"
+                            className={`w-full px-3 py-1.5 bg-white border ${hireDateError ? 'border-red-500' : 'border-gray-200'} rounded-lg text-xs font-mono font-bold transition-all text-slate-700 outline-none focus:border-[#3530B8]`}
+                          />
+                          {hireDateError && (
+                            <p className="text-red-500 text-[0.625rem] mt-1 font-medium">{hireDateError}</p>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs font-bold text-slate-700 font-mono">{selectedUser.hire_date ? String(selectedUser.hire_date).split(' ')[0] : '-'}</span>
+                      )}
                     </div>
                     {getStatusLabel(selectedUser.status) === '휴직' && (
                       <div className="flex justify-between items-center mt-4">
