@@ -302,6 +302,7 @@ const MinutesList = () => {
     });
   };
 
+  // [수정] 작성자, 주최자, 참석자, 전체 공유 여부를 각각 독립적으로 확인할 수 있도록 플래그 설정
   const filteredMinutes = Array.isArray(minutesList) ? minutesList.filter(item => {
     const title = item?.title || '';
     const meetingDt = item?.meeting_dt || '';
@@ -311,20 +312,19 @@ const MinutesList = () => {
     const isHost = item?.host_users_id === user?.id;
     const isShared = item?.is_shared === 'Y';
     return matchesSearch && (isAuthor || isAttendee || isHost || isShared);
-  }).map(item => ({
-    ...item,
-    badgeType: (() => {
-      const isAuthor = item?.users_id === user?.id;
-      const isHost = item?.host_users_id === user?.id;
-      const isAttendee = (item?.attendees || []).some(a => a.users_id === user?.id);
-      if (isAuthor && isHost) return 'author_host';
-      if (isAuthor) return 'author';
-      if (isHost) return 'host';
-      if (isAttendee) return 'attendee';
-      if (item?.is_shared === 'Y') return 'shared'; // 관계는 없지만 전체공유로 보이는 케이스
-      return 'attendee';
-    })()
-  })) : [];
+  }).map(item => {
+    const isAuthor = item?.users_id === user?.id;
+    const isHost = item?.host_users_id === user?.id;
+    const isAttendee = (item?.attendees || []).some(a => a.users_id === user?.id);
+    const isShared = item?.is_shared === 'Y';
+    return {
+      ...item,
+      isAuthor,
+      isHost,
+      isAttendee: isAttendee && !isHost, // 주최자인 경우 참석자 태그 중복 제외
+      isShared
+    };
+  }) : [];
 
   const totalCount = filteredMinutes.length;
   const totalPages = Math.ceil(totalCount / itemsPerPage) || 1;
@@ -442,13 +442,10 @@ const MinutesList = () => {
     };
   }, [showResults, updateDropdownPos]);
 
+  // [수정] 참석자 선택 목록에 작성자(현재 로그인 한 본인)도 표시되도록 작성자 제외 조건 제거
   const filteredEmployees = (allEmployees || []).filter(emp => {
     const hostId = newMinutes.hostObj?.id || editMinutes?.hostObj?.id;
-    const authorId = newMinutes.users_id || editMinutes?.users_id || user?.id;
     if (emp.id === hostId) return false;
-    if (emp.id === authorId) return false;
-    if (emp.id === user?.id) return false;
-
     if (!searchQuery.trim()) return true;
 
     const name = emp?.name || '';
@@ -660,8 +657,8 @@ const MinutesList = () => {
 
           <div className="flex-1 overflow-y-auto px-4 md:px-8 py-2 custom-scrollbar">
             <div className="hidden md:grid md:grid-cols-12 gap-4 px-12 py-3 bg-white border-b border-gray-100 shrink-0">
-              <div className="md:col-span-5 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">회의 제목</div>
-              <div className="md:col-span-4 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">일시</div>
+              <div className="md:col-span-6 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">회의 제목</div>
+              <div className="md:col-span-3 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider">일시</div>
               <div className="md:col-span-3 text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider text-center">참여자</div>
             </div>
 
@@ -672,22 +669,23 @@ const MinutesList = () => {
                   paginatedMinutes.map((item) => (
                     <div key={item.minute_seq} onClick={() => handleSelectMinutes(item.minute_seq)}
                       className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group px-4 py-5 md:py-4 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4 ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}>
-                      <div className="md:col-span-5 flex items-center gap-2 min-w-0">
+                      <div className="md:col-span-6 flex items-center gap-2 min-w-0">
                         <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>{item.title}</span>
-                        {item.badgeType === 'author_host' && (
+                        {/* [수정] 작성자, 주최자, 참석자 태그 및 전체 공유 글인 경우 전체 공유 태그가 함께 나란히 뜨도록 수정 */}
+                        {item.isAuthor && (
+                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">작성자</span>
+                        )}
+                        {item.isHost && (
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
                         )}
-                        {item.badgeType === 'host' && (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
-                        )}
-                        {item.badgeType === 'attendee' && (
+                        {item.isAttendee && (
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
                         )}
-                        {item.badgeType === 'shared' && (
+                        {item.isShared && (
                           <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">전체공유</span>
                         )}
                       </div>
-                      <div className="md:col-span-4 text-xs text-gray-500 font-medium whitespace-nowrap">
+                      <div className="md:col-span-3 text-xs text-gray-500 font-medium whitespace-nowrap">
                         <span className="md:hidden text-gray-400 mr-2 font-bold uppercase text-[10px]">일시</span>
                         {item.meeting_dt} | {formatTime(item.start_time)} – {formatTime(item.end_time)}
                       </div>
@@ -774,12 +772,20 @@ const MinutesList = () => {
                   </div>
                 ) : (
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    {/* [수정] 회의록 상세 보기 헤더에도 작성자, 주최자, 참석자, 전체공유 태그가 함께 나란히 뜨도록 수정 */}
+                    <div className="flex items-center flex-wrap gap-2 mb-1">
                       <h2 className="text-xl md:text-2xl font-bold text-indigo-950">{activeDetail.title}</h2>
-                      {activeDetail.host_users_id === user?.id ? (
+                      {activeDetail.users_id === user?.id && (
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">작성자</span>
+                      )}
+                      {activeDetail.host_users_id === user?.id && (
                         <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
-                      ) : activeDetail.users_id !== user?.id && (
+                      )}
+                      {(activeDetail.attendees || []).some(a => a.users_id === user?.id) && activeDetail.host_users_id !== user?.id && (
                         <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                      )}
+                      {activeDetail.is_shared === 'Y' && (
+                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">전체공유</span>
                       )}
                     </div>
                     <p className="text-sm text-gray-500 font-medium whitespace-nowrap">
@@ -996,10 +1002,9 @@ const MinutesList = () => {
                   {/* 전체 공유 토글 */}
                   {activeDetail.users_id === user?.id && !isEditing && (
                     <div className="pt-6 flex items-center justify-between bg-slate-50/50 border border-slate-100 rounded-2xl px-4 py-3">
-                      <div className="flex flex-col">
-                        <span className="text-xs font-bold text-gray-700">전체 공유</span>
-                        <span className="text-[11px] text-gray-400 mt-0.5">
-                          {activeDetail.is_shared === 'Y' ? '전사 직원이 목록에서 볼 수 있어요.' : '참석자와 주최자만 볼 수 있어요.'}
+                      <div>
+                        <span className="text-xs font-bold text-gray-500">
+                          {activeDetail.is_shared === 'Y' ? '현재는 전사 직원이 목록에서 볼 수 있어요.' : '현재는 참석자와 주최자만 볼 수 있어요.'}
                         </span>
                       </div>
                       <button
@@ -1016,11 +1021,10 @@ const MinutesList = () => {
                             alertError('오류 발생', '공유 설정 변경 중 오류가 발생했습니다.');
                           });
                         }}
-                        className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
-                          activeDetail.is_shared === 'Y'
-                            ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
-                            : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                        }`}
+                        className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${activeDetail.is_shared === 'Y'
+                          ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
+                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                          }`}
                       >
                         {activeDetail.is_shared === 'Y' ? '공유 해제' : '전체 공유'}
                       </button>
@@ -1209,11 +1213,10 @@ const MinutesList = () => {
                     </div>
                     <button
                       onClick={() => setNewMinutes({ ...newMinutes, is_shared: newMinutes.is_shared === 'Y' ? 'N' : 'Y' })}
-                      className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
-                        newMinutes.is_shared === 'Y'
-                          ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      }`}
+                      className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${newMinutes.is_shared === 'Y'
+                        ? 'bg-amber-50 text-amber-600 border border-amber-200 hover:bg-amber-100'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        }`}
                     >
                       {newMinutes.is_shared === 'Y' ? '공유 해제' : '전체 공유'}
                     </button>
