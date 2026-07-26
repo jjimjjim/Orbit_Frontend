@@ -669,21 +669,25 @@ const MinutesList = () => {
                   paginatedMinutes.map((item) => (
                     <div key={item.minute_seq} onClick={() => handleSelectMinutes(item.minute_seq)}
                       className={`cursor-pointer hover:bg-indigo-50/50 transition-colors group px-4 py-5 md:py-4 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4 ${activeId === item.minute_seq ? 'bg-indigo-50/50' : ''}`}>
-                      <div className="md:col-span-6 flex items-center gap-2 min-w-0">
-                        <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate`}>{item.title}</span>
-                        {/* [수정] 작성자, 주최자, 참석자 태그 및 전체 공유 글인 경우 전체 공유 태그가 함께 나란히 뜨도록 수정 */}
-                        {item.isAuthor && (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">작성자</span>
+                      {/* [수정] 모바일 화면에서 태그들 때문에 제목이 잘리지 않도록 태그를 제목 상단으로 배치 (데스크톱은 우측 배치 유지) */}
+                      <div className="md:col-span-6 flex flex-col md:flex-row md:items-center gap-1.5 md:gap-2 min-w-0">
+                        {(item.isAuthor || item.isHost || item.isAttendee || item.isShared) && (
+                          <div className="flex items-center flex-wrap gap-1.5 order-1 md:order-2 shrink-0">
+                            {item.isAuthor && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">작성자</span>
+                            )}
+                            {item.isHost && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
+                            )}
+                            {item.isAttendee && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                            )}
+                            {item.isShared && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">전체공유</span>
+                            )}
+                          </div>
                         )}
-                        {item.isHost && (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
-                        )}
-                        {item.isAttendee && (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
-                        )}
-                        {item.isShared && (
-                          <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">전체공유</span>
-                        )}
+                        <span className={`text-sm font-bold group-hover:text-indigo-600 transition-colors ${activeId === item.minute_seq ? 'text-indigo-600' : 'text-gray-700'} truncate order-2 md:order-1`}>{item.title}</span>
                       </div>
                       <div className="md:col-span-3 text-xs text-gray-500 font-medium whitespace-nowrap">
                         <span className="md:hidden text-gray-400 mr-2 font-bold uppercase text-[10px]">일시</span>
@@ -772,21 +776,25 @@ const MinutesList = () => {
                   </div>
                 ) : (
                   <div>
-                    {/* [수정] 회의록 상세 보기 헤더에도 작성자, 주최자, 참석자, 전체공유 태그가 함께 나란히 뜨도록 수정 */}
-                    <div className="flex items-center flex-wrap gap-2 mb-1">
-                      <h2 className="text-xl md:text-2xl font-bold text-indigo-950">{activeDetail.title}</h2>
-                      {activeDetail.users_id === user?.id && (
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">작성자</span>
+                    {/* [수정] 모바일 화면에서 태그들이 회의 제목 상단에 오도록 수정 (데스크톱은 나란히 우측에 표시) */}
+                    <div className="flex flex-col md:flex-row md:items-center flex-wrap gap-1.5 md:gap-2 mb-1">
+                      {(activeDetail.users_id === user?.id || activeDetail.host_users_id === user?.id || (activeDetail.attendees || []).some(a => a.users_id === user?.id) || activeDetail.is_shared === 'Y') && (
+                        <div className="flex items-center flex-wrap gap-1.5 order-1 md:order-2 shrink-0">
+                          {activeDetail.users_id === user?.id && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">작성자</span>
+                          )}
+                          {activeDetail.host_users_id === user?.id && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
+                          )}
+                          {(activeDetail.attendees || []).some(a => a.users_id === user?.id) && activeDetail.host_users_id !== user?.id && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
+                          )}
+                          {activeDetail.is_shared === 'Y' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">전체공유</span>
+                          )}
+                        </div>
                       )}
-                      {activeDetail.host_users_id === user?.id && (
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600">주최자</span>
-                      )}
-                      {(activeDetail.attendees || []).some(a => a.users_id === user?.id) && activeDetail.host_users_id !== user?.id && (
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600">참석자</span>
-                      )}
-                      {activeDetail.is_shared === 'Y' && (
-                        <span className="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600">전체공유</span>
-                      )}
+                      <h2 className="text-xl md:text-2xl font-bold text-indigo-950 order-2 md:order-1">{activeDetail.title}</h2>
                     </div>
                     <p className="text-sm text-gray-500 font-medium whitespace-nowrap">
                       {activeDetail.meeting_dt} | {formatTime(activeDetail.start_time)} – {formatTime(activeDetail.end_time)}
