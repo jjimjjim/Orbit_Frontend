@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox, faBookmark } from '@fortawesome/free-solid-svg-icons';
+import { faFileSignature, faDoorOpen, faFileCirclePlus, faDiagramProject, faClipboard, faBox, faBookmark, faBuilding, faFileShield, faUserCheck, faFilePen } from '@fortawesome/free-solid-svg-icons';
 import { faHouse, faSitemap, faFolderOpen, faAddressCard, faDesktop, faClipboardCheck } from '@fortawesome/free-solid-svg-icons';
 
 
-import { IMAGES } from '../../images/images'; 
+import { IMAGES } from '../../images/images';
 
 import usePublicCalendar from '../schedules/publicCalendar';
 import { checkIn_api, checkOut_api, getAttendanceStatus, getNoticeList, getQuickActionSettings, updateQuickActionSettings } from './mainApi';
@@ -23,35 +23,41 @@ import QuickActionEditModal from './QuickActionEditModal';
 import { alertSuccess, alertError, alertConfirm } from '../../utils/alert';
 
 const ALL_QUICK_ACTIONS = {
-  draft:              { title: "기안 작성", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", isModal: "draft" },
-  meetingRoom:        { title: "회의실 예약", icon: faDoorOpen, iconBgColor: "#EFF6FF", color: "#2c7af7", path: "/meetingRooms" },
-  bookmark:           { title: "내 북마크 문서", icon: faBookmark, iconBgColor: "#ECFDF5", color: "#09af78", path: "/documents?tab=즐겨찾기" },
-  project:            { title: "프로젝트 생성", icon: faDiagramProject, iconBgColor: "#FFF1F2", color: "#f62f32", isModal: "project" },
-  meetingMinutes:     { title: "회의록 작성", icon: faClipboard, iconBgColor: "#F5F3FF", color: "#702de3", path: "/meetingMinutes" },
-  supply:             { title: "비품 신청", icon: faBox, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/supply" },
+  draft: { title: "기안 작성", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", isModal: "draft" },
+  meetingRoom: { title: "회의실 예약", icon: faDoorOpen, iconBgColor: "#EFF6FF", color: "#2c7af7", path: "/meetingRooms" },
+  bookmark: { title: "내 북마크 문서", icon: faBookmark, iconBgColor: "#ECFDF5", color: "#09af78", path: "/documents?tab=즐겨찾기" },
+  project: { title: "프로젝트 생성", icon: faDiagramProject, iconBgColor: "#FFF1F2", color: "#f62f32", isModal: "project" },
+  meetingMinutes: { title: "회의록 작성", icon: faClipboard, iconBgColor: "#F5F3FF", color: "#702de3", path: "/meetingMinutes" },
+  supply: { title: "비품 신청", icon: faBox, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/supply" },
 
-  departments:        { title: "조직도", icon: faSitemap, iconBgColor: "#F0FDFA", color: "#0d9488", path: "/departments" },
-  approvalMypage:     { title: "내가 올린 기안", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalMypage" },
-  approvalInbox:      { title: "내가 결재할 기안", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalInbox" },
-  approvalCc:         { title: "참조 문서함", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalCc" },
-  approvalTemp:       { title: "임시 문서함", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalTemp" },
-  certificate:        { title: "증명서 발급 신청", icon: faFolderOpen, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/certificate" },
-  documents:          { title: "자료실", icon: faFolderOpen, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/documents" },
-  project_manage:     { title: "프로젝트 관리", icon: faDiagramProject, iconBgColor: "#FFF1F2", color: "#f62f32", path: "/projects" },
+  departments: { title: "조직도", icon: faSitemap, iconBgColor: "#F0FDFA", color: "#0d9488", path: "/departments" },
+  approvalMypage: { title: "내가 올린 기안", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalMypage" },
+  approvalInbox: { title: "내가 결재할 기안", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalInbox" },
+  approvalCc: { title: "참조 문서함", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalCc" },
+  approvalTemp: { title: "임시 문서함", icon: faFileSignature, iconBgColor: "#FFF4E5", color: "#f89e04", path: "/approvalTemp" },
+  certificate: { title: "증명서 발급 신청", icon: faFolderOpen, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/certificate" },
+  documents: { title: "자료실", icon: faFolderOpen, iconBgColor: "#FFF0F9", color: "#e2328a", path: "/documents" },
+  project_manage: { title: "프로젝트 관리", icon: faDiagramProject, iconBgColor: "#FFF1F2", color: "#f62f32", path: "/projects" },
+  adminDocument: { title: "문서 관리", icon: faFileShield, iconBgColor: "#F1F5F9", color: "#76a2dfff", path: "/adminDocument" },
+  adminQna: { title: "AI 미답변 질문 관리", icon: faFileShield, iconBgColor: "#F1F5F9", color: "#76a2dfff", path: "/adminQna" },
 
-  adminUsers:         { title: "직원 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminUsers", authGroups: ["ROLE_HR_ADMIN"] },
-  adminDepartments:   { title: "부서 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminDepartments", authGroups: ["ROLE_HR_ADMIN"] },
-  adminRank:          { title: "직급 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminRank", authGroups: ["ROLE_HR_ADMIN"] },
-  adminSignup:        { title: "회원가입 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSignup", authGroups: ["ROLE_HR_ADMIN"] },
-  adminAttendance:    { title: "근태 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminAttendance", authGroups: ["ROLE_HR_ADMIN"] },
-  adminLeave:         { title: "연차 관리", icon: faAddressCard, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminLeave", authGroups: ["ROLE_HR_ADMIN"] },
-  adminCertType:      { title: "증명서 유형 관리", icon: faClipboardCheck, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminCertType", authGroups: ["ROLE_HR_ADMIN"] },
-  adminCertRequest:   { title: "증명서 발급 신청 관리", icon: faClipboardCheck, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminCertRequest", authGroups: ["ROLE_HR_ADMIN"] },
+  adminUsers: { title: "직원 관리", icon: faAddressCard, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminUsers", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminDepartments: { title: "부서 관리", icon: faAddressCard, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminDepartments", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminRank: { title: "직급 관리", icon: faAddressCard, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminRank", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminSignup: { title: "회원가입 관리", icon: faAddressCard, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminSignup", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminAttendance: { title: "근태 관리", icon: faAddressCard, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminAttendance", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminLeave: { title: "연차 관리", icon: faAddressCard, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminLeave", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminCertType: { title: "증명서 유형 관리", icon: faClipboardCheck, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminCertType", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminCertRequest: { title: "증명서 발급 신청 관리", icon: faClipboardCheck, iconBgColor: "#f1fae5ff", color: "#a0da55f6", path: "/adminCertRequest", authGroups: ["ROLE_HR_ADMIN", "ROLE_SUPER_ADMIN"] },
 
-  adminSupply:        { title: "비품 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSupply", authGroups: ["ROLE_GA_ADMIN"] },
-  adminSupplyRequest: { title: "비품 신청 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSupplyRequest", authGroups: ["ROLE_GA_ADMIN"] },
-  adminSupplyRental:  { title: "비품 대여이력 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminSupplyRental", authGroups: ["ROLE_GA_ADMIN"] },
-  adminMeetingRoom:   { title: "회의실 관리", icon: faDesktop, iconBgColor: "#F1F5F9", color: "#475569", path: "/adminMeetingRoom", authGroups: ["ROLE_GA_ADMIN"] },
+  adminSupply: { title: "비품 관리", icon: faDesktop, iconBgColor: "#fff2f4ff", color: "#e22b59ff", path: "/adminSupply", authGroups: ["ROLE_GA_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminSupplyRequest: { title: "비품 신청 관리", icon: faDesktop, iconBgColor: "#fff2f4ff", color: "#e22b59ff", path: "/adminSupplyRequest", authGroups: ["ROLE_GA_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminSupplyRental: { title: "비품 대여이력 관리", icon: faDesktop, iconBgColor: "#fff2f4ff", color: "#e22b59ff", path: "/adminSupplyRental", authGroups: ["ROLE_GA_ADMIN", "ROLE_SUPER_ADMIN"] },
+  adminMeetingRoom: { title: "회의실 관리", icon: faDesktop, iconBgColor: "#fff2f4ff", color: "#e22b59ff", path: "/adminMeetingRoom", authGroups: ["ROLE_GA_ADMIN", "ROLE_SUPER_ADMIN"] },
+
+  adminCompanyInfo: { title: "회사 정보 관리", icon: faBuilding, iconBgColor: "#F1F5F9", color: "#4881d1ff", path: "/adminCompanyInfo", authGroups: ["ROLE_SUPER_ADMIN"] },
+  adminApprovalLine: { title: "결재선 관리", icon: faUserCheck, iconBgColor: "#F1F5F9", color: "#4881d1ff", path: "/adminApprovalLine", authGroups: ["ROLE_SUPER_ADMIN"] },
+  adminPageInfo: { title: "페이지 안내 문구 관리", icon: faFilePen, iconBgColor: "#F1F5F9", color: "#4881d1ff", path: "/adminPageInfo", authGroups: ["ROLE_SUPER_ADMIN"] }
 };
 
 const DEFAULT_QUICK_ACTION_ORDER = "draft,meetingRoom,bookmark,project,meetingMinutes,supply";
@@ -99,7 +105,7 @@ const Main = () => {
             // 서버에서 받은 시간이 있다면 상태 업데이트
             if (resp.data.check_in) setCheckIn(new Date(resp.data.check_in));
             if (resp.data.check_out) setCheckOut(new Date(resp.data.check_out));
-            if (resp.data.attendance_seq) setAttendanceSeq(resp.data.attendance_seq); 
+            if (resp.data.attendance_seq) setAttendanceSeq(resp.data.attendance_seq);
           }
         })
         .catch(err => {
@@ -108,11 +114,11 @@ const Main = () => {
 
       // 게시판 목록 가져오기 (최신 5개)
       getNoticeList().then(resp => {
-        setBoardPosts(resp.data|| []);
+        setBoardPosts(resp.data || []);
       })
-      .catch(err => {
-        console.error('게시판 목록 로드 실패:', err);
-      });
+        .catch(err => {
+          console.error('게시판 목록 로드 실패:', err);
+        });
 
       getQuickActionSettings().then(resp => {
         setQuickActionOrder(resp.data?.quick_action_order || DEFAULT_QUICK_ACTION_ORDER);
@@ -156,16 +162,16 @@ const Main = () => {
     }
   };
 
-const formatStampTime = (date) =>
-  date.toLocaleTimeString('ko-KR', 
-    { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  const formatStampTime = (date) =>
+    date.toLocaleTimeString('ko-KR',
+      { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
- //calendar
- const { calendarEvents, selectedDate, setSelectedDate, selectedSchedules, handleDateClick, isCalendarLoading } = usePublicCalendar();
+  //calendar
+  const { calendarEvents, selectedDate, setSelectedDate, selectedSchedules, handleDateClick, isCalendarLoading } = usePublicCalendar();
 
   // 매 시간 달이 바뀌었는지 체크하여 캘린더 자동 업데이트
   useEffect(() => {
@@ -179,12 +185,12 @@ const formatStampTime = (date) =>
     const checkMonth = () => {
       const now = new Date();
       if (!selectedDate || new Date(selectedDate).getMonth() !== now.getMonth() || new Date(selectedDate).getFullYear() !== now.getFullYear()) {
-         const newDate = new Date(now.getFullYear(), now.getMonth(), 1);
-         setSelectedDate(toLocalDateStr(newDate));
+        const newDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        setSelectedDate(toLocalDateStr(newDate));
       }
     };
     checkMonth();
-    const interval = setInterval(checkMonth, 3600000); 
+    const interval = setInterval(checkMonth, 3600000);
     return () => clearInterval(interval);
   }, [selectedDate, setSelectedDate]);
 
@@ -211,7 +217,7 @@ const formatStampTime = (date) =>
   const quickActionKeys = (quickActionOrder || DEFAULT_QUICK_ACTION_ORDER)
     .split(',')
     .filter(key => ALL_QUICK_ACTIONS[key] && hasQuickActionAccess(ALL_QUICK_ACTIONS[key]));
-    
+
   return (
     <div className="w-full h-auto lg:h-full flex flex-col p-4 lg:px-7 box-border lg:overflow-hidden bg-white">
       {/* 빠른실행 모달로 바로가기 */}
@@ -231,8 +237,8 @@ const formatStampTime = (date) =>
       )}
       {isProjectModalOpen && <ProjectModal onClose={() => setIsProjectModalOpen(false)} />}
       {isCorrectionModalOpen && (
-        <CheckoutCorrectionModal 
-          onClose={() => setIsCorrectionModalOpen(false)} 
+        <CheckoutCorrectionModal
+          onClose={() => setIsCorrectionModalOpen(false)}
           checkOutTime={checkOut ? formatStampTime(checkOut) : null}
           attendanceSeq={attendanceSeq}
         />
@@ -253,10 +259,10 @@ const formatStampTime = (date) =>
 
       {/* 메인 레이아웃: 좌측(8)과 우측(4) 영역을 분리하여 PC에서 독립된 기둥으로 정렬 */}
       <div className="flex-1 flex flex-col lg:grid lg:grid-cols-12 gap-6 min-h-0">
-        
+
         {/* ==================== LEFT COLUMN (8칸) ==================== */}
         <div className="lg:col-span-8 flex flex-col gap-6 h-full min-h-0 order-1">
-          
+
           {/* 상단: 근태 관리 및 빠른 실행 개별 그리드 */}
           <div className="grid grid-cols-1 md:grid-cols-8 gap-6 shrink-0">
             {/* Box 1: 근태 관리 */}
@@ -269,11 +275,11 @@ const formatStampTime = (date) =>
                   <button onClick={() => setIsOvertimeModalOpen(true)} className="text-[0.625rem] text-gray-400 font-bold hover:text-indigo-950">연장근무</button>
                 </div>
               </div>
-                <div className="flex-1 flex flex-col items-center justify-center">
-                  <span className="text-xs font-semibold text-gray-500 mb-1">현재 시간</span>
-                  <p className="text-4xl font-extrabold text-indigo-950 leading-tight">{formatTime(currentTime)}</p>
-                </div>
-                {/* 출퇴근 시간 표시 */}
+              <div className="flex-1 flex flex-col items-center justify-center">
+                <span className="text-xs font-semibold text-gray-500 mb-1">현재 시간</span>
+                <p className="text-4xl font-extrabold text-indigo-950 leading-tight">{formatTime(currentTime)}</p>
+              </div>
+              {/* 출퇴근 시간 표시 */}
               <div className="flex gap-2 w-full">
                 <button
                   onClick={handleCheckIn}
@@ -311,7 +317,7 @@ const formatStampTime = (date) =>
                   {checkOut ? formatStampTime(checkOut) : '-'}
                 </span>
               </div>
-          </div>
+            </div>
 
             {/* Box 2: 빠른 실행 (3x2) */}
             <div className="md:col-span-5 bg-white p-4 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[16.25rem] lg:h-[16.25rem]">
@@ -324,9 +330,9 @@ const formatStampTime = (date) =>
                   const action = ALL_QUICK_ACTIONS[key];
                   return (
                     <button key={key}
-                    onClick={() => handleQuickActionClick(key)}
-                    onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
-                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
+                      onClick={() => handleQuickActionClick(key)}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#F0F4FF'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
                       style={{ backgroundColor: "white", borderColor: "#F0F0F0" }}
                       className="flex flex-row items-center justify-start gap-2.5 px-3 py-2 border rounded-2xl transition-all overflow-hidden">
                       <div style={{ backgroundColor: action.iconBgColor }} className="p-2 ml-0.5 rounded-xl shrink-0">
@@ -345,33 +351,33 @@ const formatStampTime = (date) =>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
               {/* 달력 */}
               <div className="flex flex-col h-full overflow-hidden">
-                  <div className="flex-1 overflow-hidden main-calendar">
-                    <style>{`
+                <div className="flex-1 overflow-hidden main-calendar">
+                  <style>{`
                       .main-calendar .mb-4 button {
                         display: none !important;
                       }
                     `}</style>
-                        {isCalendarLoading ? (
-      // 스켈레톤
-      <div className="animate-pulse p-2">
-        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
-        <div className="grid grid-cols-7 gap-1">
-          {Array(35).fill(0).map((_, i) => (
-            <div key={i} className="h-7 bg-gray-100 rounded" />
-          ))}
-        </div>
-      </div>
-    ) : (
-      // 실제 캘린더
-      <Calendar 
-        key={selectedDate?.slice(0, 7)}
-        isStatic={true}
-        value={selectedDate}
-        events={calendarEvents}
-        onChange={handleDateClick}
-      />
-    )}
-                  </div>
+                  {isCalendarLoading ? (
+                    // 스켈레톤
+                    <div className="animate-pulse p-2">
+                      <div className="h-4 bg-gray-200 rounded w-1/3 mb-4" />
+                      <div className="grid grid-cols-7 gap-1">
+                        {Array(35).fill(0).map((_, i) => (
+                          <div key={i} className="h-7 bg-gray-100 rounded" />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    // 실제 캘린더
+                    <Calendar
+                      key={selectedDate?.slice(0, 7)}
+                      isStatic={true}
+                      value={selectedDate}
+                      events={calendarEvents}
+                      onChange={handleDateClick}
+                    />
+                  )}
+                </div>
               </div>
               {/* 일정 */}
               <div className="flex flex-col border-t md:border-t-0 md:border-l border-gray-100 pt-5 md:pt-0 md:pl-5 h-full overflow-hidden">
@@ -395,11 +401,11 @@ const formatStampTime = (date) =>
                       </div>
                     </div>
                   ))
-                ):(
-                  <div className="h-full flex items-center justify-center">
-                    <p className="text-xs text-gray-400">오늘의 일정이 없습니다.</p>
-                  </div>
-                )}
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-xs text-gray-400">오늘의 일정이 없습니다.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -410,7 +416,7 @@ const formatStampTime = (date) =>
         {/* ==================== RIGHT COLUMN (4칸) ==================== */}
         {/* PC 화면에서 윗 라인에 딱 맞춰 붙도록 독립된 기둥으로 설정 */}
         <div className="lg:col-span-4 flex flex-col gap-5 h-full min-h-0 order-2">
-          
+
           {/* Box 3: 사내게시판 */}
           <div className="bg-white p-5 rounded-3xl border border-gray-200 shadow-sm flex flex-col min-h-[15.625rem] lg:flex-1 overflow-hidden">
             <div className="flex justify-between items-center mb-6">
@@ -426,15 +432,15 @@ const formatStampTime = (date) =>
               `}</style>
               {boardPosts.length > 0 ? (
                 boardPosts.slice(0, 5).map((post) => (
-                  <div 
-                    key={post.post_seq} 
+                  <div
+                    key={post.post_seq}
                     onClick={() => navigate(`/boardDetail/${post.post_seq}`)}
                     className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0 cursor-pointer hover:bg-gray-50 transition-colors group"
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`px-2 py-0.5 rounded text-[0.5625rem] font-bold shrink-0 
-                        ${['공지', '경조', '생일', '승진', '부서 이동'].includes(post.category?.trim()) 
-                          ? 'bg-red-50 text-red-500' 
+                        ${['공지', '경조', '생일', '승진', '부서 이동'].includes(post.category?.trim())
+                          ? 'bg-red-50 text-red-500'
                           : 'bg-blue-50 text-blue-500'}`}
                       >
                         {post.category || '일반'}
@@ -455,7 +461,7 @@ const formatStampTime = (date) =>
           </div>
 
           {/* Box 5: AI 챗봇 */}
-                 <div className="bg-[#F0F4FF] p-5 rounded-3xl shadow-lg flex flex-col justify-between text-[#1a1756] relative overflow-hidden min-h-[15.625rem] lg:flex-1">
+          <div className="bg-[#F0F4FF] p-5 rounded-3xl shadow-lg flex flex-col justify-between text-[#1a1756] relative overflow-hidden min-h-[15.625rem] lg:flex-1">
             <div className="absolute top-[-1.25rem] right-[-1.25rem] w-20 h-20 bg-white/10 rounded-full blur-3xl"></div>
             <div className="shrink-0 relative z-10">
               <div className="flex items-center gap-2 mb-3">
@@ -465,17 +471,17 @@ const formatStampTime = (date) =>
               <p className="text-xl lg:text-2xl font-semibold leading-tight mb-2">무엇을 도와드릴까요?</p>
               <p className="text-[0.75rem] font-semibold lg:text-s text-[#3530B8]">궁금한 업무 정보를 물어보세요.</p>
             </div>
-            <div className="mt-auto relative z-10">         
+            <div className="mt-auto relative z-10">
               <button
                 onClick={() => navigate('/aiChat')}
                 className="relative z-20 w-1/2 md:w-2/3 lg:w-3/5 py-3.5 bg-white text-indigo-950 font-bold text-sm rounded-xl shadow-md active:scale-[0.98] transition-all"
               >
                 AI 채팅 시작하기
               </button>
-              <img 
-                src={IMAGES.MAIN_AI1} 
-                className="absolute -bottom-4 md:-bottom-2 lg:-bottom-2 -right-2 w-24 h-24 md:w-32 md:h-32 lg:w-44 lg:h-44 object-contain opacity-80 lg:opacity-100 transition-all duration-300" 
-                alt="" 
+              <img
+                src={IMAGES.MAIN_AI1}
+                className="absolute -bottom-4 md:-bottom-2 lg:-bottom-2 -right-2 w-24 h-24 md:w-32 md:h-32 lg:w-44 lg:h-44 object-contain opacity-80 lg:opacity-100 transition-all duration-300"
+                alt=""
               />
             </div>
           </div>
