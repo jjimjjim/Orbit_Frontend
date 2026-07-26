@@ -3,17 +3,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEdit, faTrashAlt, faChevronRight, faTimes, faPlus, faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import useLoadingStore from '../../store/useLoadingStore';
 import usePageInfoStore from '../../store/usePageInfoStore';
+import useEmployeeStore from '../../store/useEmployeeStore';
 import { getRankList, getDeptList, getApprovalLines, saveApprovalLines, deleteApprovalLine } from './adminApi';
 import { alertWarning, alertConfirm, alertSuccess, alertError } from '../../utils/alert';
 
-const CustomSelect = ({ value, options, onChange, placeholder, hasError, errorMessage }) => {
+const CustomSelect = ({ value, options, onChange, placeholder, hasError, errorMessage, isSearchable = false }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const selectRef = React.useRef(null);
 
     React.useEffect(() => {
         const handleClickOutside = (event) => {
             if (selectRef.current && !selectRef.current.contains(event.target)) {
                 setIsOpen(false);
+                setSearchTerm('');
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -23,26 +26,59 @@ const CustomSelect = ({ value, options, onChange, placeholder, hasError, errorMe
     return (
         <div className="relative" ref={selectRef}>
             <div
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                    if (!isOpen) {
+                        setIsOpen(true);
+                        setSearchTerm('');
+                    } else if (!isSearchable) {
+                        setIsOpen(false);
+                    }
+                }}
                 className={`w-full px-2 py-1.5 md:px-4 md:py-2 bg-white border ${hasError ? 'border-red-500' : 'border-gray-200'} rounded-lg text-[10px] md:text-sm font-bold text-gray-700 flex items-center justify-between cursor-pointer hover:border-[#3530B8] transition-all gap-1`}
             >
-                <span className="truncate">{value ? options.find(o => o.value === value)?.label : <span className="text-gray-400">{placeholder}</span>}</span>
+                {isSearchable ? (
+                    <input
+                        type="text"
+                        value={isOpen ? searchTerm : (options.find(o => o.value == value)?.label || '')}
+                        onChange={(e) => {
+                            if (!isOpen) setIsOpen(true);
+                            setSearchTerm(e.target.value);
+                        }}
+                        onFocus={() => {
+                            if (!isOpen) {
+                                setIsOpen(true);
+                                setSearchTerm('');
+                            }
+                        }}
+                        placeholder={value ? options.find(o => o.value == value)?.label : placeholder}
+                        className="w-full bg-transparent outline-none truncate placeholder-gray-400 font-bold cursor-pointer focus:cursor-text"
+                    />
+                ) : (
+                    <span className="truncate">{value ? options.find(o => o.value == value)?.label : <span className="text-gray-400">{placeholder}</span>}</span>
+                )}
                 <FontAwesomeIcon icon={faChevronDown} className={`text-[8px] md:text-[10px] text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
             {isOpen && (
                 <div className="absolute top-full left-0 right-0 mt-1 z-[100] bg-white border border-gray-100 rounded-xl shadow-lg max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95">
-                    {options.map(opt => (
-                        <div
-                            key={opt.value}
-                            onClick={() => {
-                                onChange(opt.value);
-                                setIsOpen(false);
-                            }}
-                            className={`p-2 md:p-3 hover:bg-[#F0F4FF] cursor-pointer text-[10px] md:text-xs font-bold text-gray-700 border-b border-gray-50 last:border-0 ${value === opt.value ? 'bg-[#F0F4FF]' : ''}`}
-                        >
-                            {opt.label}
-                        </div>
-                    ))}
+                    {(() => {
+                        const list = isSearchable && searchTerm ? options.filter(o => o.label.toLowerCase().includes(searchTerm.toLowerCase())) : options;
+                        if (list.length === 0) {
+                            return <div className="p-3 text-center text-gray-400 text-[10px] md:text-xs font-bold">검색 결과가 없습니다.</div>;
+                        }
+                        return list.map(opt => (
+                            <div
+                                key={opt.value}
+                                onClick={() => {
+                                    onChange(opt.value);
+                                    setIsOpen(false);
+                                    setSearchTerm('');
+                                }}
+                                className={`p-2 md:p-3 hover:bg-[#F0F4FF] cursor-pointer text-[10px] md:text-xs font-bold text-gray-700 border-b border-gray-50 last:border-0 ${value == opt.value ? 'bg-[#F0F4FF]' : ''}`}
+                            >
+                                {opt.label}
+                            </div>
+                        ));
+                    })()}
                 </div>
             )}
             {hasError && <p className="text-red-500 text-[10px] mt-1 ml-1">{errorMessage}</p>}
@@ -54,6 +90,7 @@ const AdminApprovalLine = () => {
     const { pages } = usePageInfoStore();
     const showLoading = useLoadingStore(state => state.showLoading);
     const hideLoading = useLoadingStore(state => state.hideLoading);
+    const { allEmployees, fetchEmployees } = useEmployeeStore();
 
     const DOC_TYPES = {
         '휴가 신청서': 'VACATION',
@@ -87,6 +124,7 @@ const AdminApprovalLine = () => {
                 setDeptList(deptResp.data || []);
                 const lineResp = await getApprovalLines(DOC_TYPES['휴가 신청서']);
                 setApprovalLines(lineResp.data || []);
+                await fetchEmployees();
             } catch (err) {
                 console.error("데이터 로드 실패:", err);
             } finally {
@@ -122,17 +160,22 @@ const AdminApprovalLine = () => {
         return (
             <div className="flex items-center gap-2 flex-nowrap overflow-x-auto no-scrollbar w-full">
                 {lines.map((line, idx) => {
+                    let mainText = line.rank_name;
                     let scopeText = "";
                     if (line.approver_scope === 'DRAFTER_DEPT') {
                         scopeText = "(기안자 소속)";
                     } else if (line.approver_scope === 'SPECIFIC_DEPT') {
                         scopeText = `(${line.dept_name})`;
+                    } else if (line.approver_scope === 'SPECIFIC_USER') {
+                        const emp = allEmployees.find(e => e.id == line.target_users_id);
+                        mainText = line.name || emp?.name || '직원';
+                        scopeText = `(${line.dept_name || emp?.dept_name || ''})`;
                     }
 
                     return (
                         <div key={line.step_order} className="flex items-center gap-2">
                             <span className="bg-[#F0F4FF] text-[#3530B8] text-xs font-bold px-3 py-1.5 rounded-lg border border-[#3530B8]/10 shadow-sm whitespace-nowrap">
-                                {line.rank_name} {scopeText && <span className="font-medium text-[10px] ml-1 opacity-80">{scopeText}</span>}
+                                {mainText} {scopeText && <span className="font-medium text-[10px] ml-1 opacity-80">{scopeText}</span>}
                             </span>
                             {idx < lines.length - 1 && (
                                 <FontAwesomeIcon icon={faChevronRight} className="text-gray-300 text-[10px]" />
@@ -186,7 +229,8 @@ const AdminApprovalLine = () => {
                 drafter_rank_seq: editingRankSeq,
                 approver_rank_seq: null,
                 approver_scope: '',
-                target_dept_seq: null
+                target_dept_seq: null,
+                target_users_id: ''
             }
         ]);
     };
@@ -204,14 +248,31 @@ const AdminApprovalLine = () => {
     const handleLineChange = (index, field, value) => {
         const newLines = [...editingLines];
         newLines[index][field] = value;
-        if (field === 'approver_scope' && value !== 'SPECIFIC_DEPT') {
-            newLines[index].target_dept_seq = '';
+        if (field === 'approver_scope') {
+            if (value !== 'SPECIFIC_DEPT') {
+                newLines[index].target_dept_seq = null;
+            }
+            if (value === 'SPECIFIC_USER') {
+                newLines[index].approver_rank_seq = null;
+            } else {
+                newLines[index].target_users_id = '';
+            }
+        } else if (field === 'target_users_id') {
+            const emp = allEmployees.find(e => e.id == value);
+            if (emp) {
+                newLines[index].approver_rank_seq = emp.rank_seq;
+                newLines[index].target_dept_seq = emp.dept_seq;
+            }
         }
         setEditingLines(newLines);
         setValidationErrors(prev => {
             const next = { ...prev };
             delete next[`${index}_${field}`];
-            if (field === 'approver_scope') delete next[`${index}_target_dept_seq`];
+            if (field === 'approver_scope') {
+                delete next[`${index}_target_dept_seq`];
+                delete next[`${index}_approver_rank_seq`];
+                delete next[`${index}_target_users_id`];
+            }
             return next;
         });
     };
@@ -234,9 +295,16 @@ const AdminApprovalLine = () => {
                 newErrors[`${idx}_target_dept_seq`] = '대상 부서를 선택해주세요.';
                 hasError = true;
             }
-            if (!line.approver_rank_seq) {
-                newErrors[`${idx}_approver_rank_seq`] = '검색 직급을 선택해주세요.';
-                hasError = true;
+            if (line.approver_scope === 'SPECIFIC_USER') {
+                if (!line.target_users_id) {
+                    newErrors[`${idx}_target_users_id`] = '직원을 선택해주세요.';
+                    hasError = true;
+                }
+            } else {
+                if (!line.approver_rank_seq) {
+                    newErrors[`${idx}_approver_rank_seq`] = '직급을 선택해주세요.';
+                    hasError = true;
+                }
             }
         });
 
@@ -391,7 +459,8 @@ const AdminApprovalLine = () => {
                                                 value={line.approver_scope}
                                                 options={[
                                                     { value: 'DRAFTER_DEPT', label: '기안자의 소속 조직' },
-                                                    { value: 'SPECIFIC_DEPT', label: '지정 부서' }
+                                                    { value: 'SPECIFIC_DEPT', label: '지정 부서' },
+                                                    { value: 'SPECIFIC_USER', label: '특정 직원' }
                                                 ]}
                                                 onChange={(val) => handleLineChange(idx, 'approver_scope', val)}
                                                 placeholder="선택"
@@ -414,17 +483,37 @@ const AdminApprovalLine = () => {
                                             </div>
                                         )}
 
-                                        <div className="flex-1 space-y-1.5 min-w-0">
-                                            <label className="text-[10px] md:text-xs font-bold text-gray-400 whitespace-nowrap block truncate">검색 직급</label>
-                                            <CustomSelect
-                                                value={line.approver_rank_seq}
-                                                options={ranks.map(r => ({ value: r.rank_seq, label: r.rank_name }))}
-                                                onChange={(val) => handleLineChange(idx, 'approver_rank_seq', val)}
-                                                placeholder="선택"
-                                                hasError={!!validationErrors[`${idx}_approver_rank_seq`]}
-                                                errorMessage={validationErrors[`${idx}_approver_rank_seq`]}
-                                            />
-                                        </div>
+                                        {line.approver_scope === 'SPECIFIC_USER' && (
+                                            <div className="flex-1 space-y-1.5 min-w-0">
+                                                <label className="text-[10px] md:text-xs font-bold text-gray-400 whitespace-nowrap block truncate">직원 선택</label>
+                                                <CustomSelect
+                                                    value={line.target_users_id}
+                                                    options={allEmployees.map(emp => ({
+                                                        value: emp.id,
+                                                        label: `${emp.name} (${emp.dept_name || '부서 없음'} / ${emp.rank_name || '직급 없음'})`
+                                                    }))}
+                                                    onChange={(val) => handleLineChange(idx, 'target_users_id', val)}
+                                                    placeholder="이름/부서로 검색 가능"
+                                                    isSearchable={true}
+                                                    hasError={!!validationErrors[`${idx}_target_users_id`]}
+                                                    errorMessage={validationErrors[`${idx}_target_users_id`]}
+                                                />
+                                            </div>
+                                        )}
+
+                                        {line.approver_scope !== 'SPECIFIC_USER' && (
+                                            <div className="flex-1 space-y-1.5 min-w-0">
+                                                <label className="text-[10px] md:text-xs font-bold text-gray-400 whitespace-nowrap block truncate">직급 선택</label>
+                                                <CustomSelect
+                                                    value={line.approver_rank_seq}
+                                                    options={ranks.map(r => ({ value: r.rank_seq, label: r.rank_name }))}
+                                                    onChange={(val) => handleLineChange(idx, 'approver_rank_seq', val)}
+                                                    placeholder="선택"
+                                                    hasError={!!validationErrors[`${idx}_approver_rank_seq`]}
+                                                    errorMessage={validationErrors[`${idx}_approver_rank_seq`]}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             ))}

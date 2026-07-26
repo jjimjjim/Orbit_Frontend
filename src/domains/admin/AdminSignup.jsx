@@ -149,6 +149,21 @@ const AdminSignup = () => {
     } else if (!hireDateRegex.test(hireDate)) {
       newErrors.hireDate = 'YYYY-MM-DD 형식으로 입력해 주세요.';
       isValid = false;
+    } else {
+      const [yy, mm, dd] = hireDate.split('-').map(Number);
+      const dateObj = new Date(yy, mm - 1, dd);
+
+      const isRealDate = (
+        !isNaN(dateObj.getTime()) &&
+        dateObj.getFullYear() === yy &&
+        dateObj.getMonth() + 1 === mm &&
+        dateObj.getDate() === dd
+      );
+
+      if (!isRealDate || yy < 1900) {
+        newErrors.hireDate = '존재하지 않는 날짜입니다.';
+        isValid = false;
+      }
     }
 
     if (!isValid) {
