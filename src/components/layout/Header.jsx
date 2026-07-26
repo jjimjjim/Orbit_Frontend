@@ -29,7 +29,10 @@ const Header = ({ onMenuClick }) => {
     REJECTED: "[결재 반려]",
     SUPPLY: "[비품 신청]",
     SUPPLY_APPROVED: "[비품 신청 승인]",
-    SUPPLY_REJECTED: "[비품 신청 반려]"
+    SUPPLY_REJECTED: "[비품 신청 반려]",
+    CERTISSUE: "[증명서 발급 신청]",
+    CERTISSUE_APPROVED: "[증명서 발급 신청 승인]",
+    CERTISSUE_REJECTED: "[증명서 발급 신청 반려]"
   };
 
   // 타입별 라벨 색상
@@ -44,6 +47,9 @@ const Header = ({ onMenuClick }) => {
     SUPPLY: "text-orange-600",
     SUPPLY_APPROVED: "text-green-600",
     SUPPLY_REJECTED: "text-red-600",
+    CERTISSUE: "text-orange-600",
+    CERTISSUE_APPROVED: "text-green-600",
+    CERTISSUE_REJECTED: "text-red-600",
   };
 
   // 타입별 점(dot) 색상
@@ -58,6 +64,9 @@ const Header = ({ onMenuClick }) => {
     SUPPLY: "bg-orange-500",
     SUPPLY_APPROVED: "bg-green-500",
     SUPPLY_REJECTED: "bg-red-500",
+    CERTISSUE: "bg-orange-500",
+    CERTISSUE_APPROVED: "bg-green-500",
+    CERTISSUE_REJECTED: "bg-red-500",
   };
 
   useEffect(() => {
@@ -141,6 +150,16 @@ const Header = ({ onMenuClick }) => {
         // 비품 신청 승인/반려 알림
         case "SUPPLY_REQUEST":
           navi(`/supplyHistory`)
+          break;
+
+        // 증명서 발급 신청 알림
+        case "CERTISSUE":
+          navi(`/adminCertRequest`);
+          break;
+
+        // 증명서 발급 신청 승인/반려 알림
+        case "CERTISSUE_REQUEST":
+          navi(`/certificate`);
           break;
 
         default:
