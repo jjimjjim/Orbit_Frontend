@@ -55,9 +55,9 @@ const generalMenuItems = [
       { name: '연차 관리', path: '/adminLeave' }
     ]
   },
-   {
+  {
     name: '증명서 관리',
-    icon : faClipboardCheck,
+    icon: faClipboardCheck,
     authGroups: ['ROLE_HR_ADMIN'],
     subItems: [
       { name: '증명서 유형 관리', path: '/adminCertType' },
@@ -144,7 +144,7 @@ const adminMenuItems = [
   },
   {
     name: '증명서 관리',
-    icon : faClipboardCheck,
+    icon: faClipboardCheck,
     authGroups: ['ROLE_HR_ADMIN'],
     subItems: [
       { name: '증명서 유형 관리', path: '/adminCertType' },
@@ -188,7 +188,9 @@ const Sidebar = ({ isOpen, onClose }) => {
   const navi = useNavigate();
   const logout = useAuthStore(state => state.logout);
   const [openMenuName, setOpenMenuName] = useState(null);
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isAdminMode, setIsAdminMode] = useState(() => {
+    return sessionStorage.getItem('sidebarMode') === 'admin';
+  });
   const user = useUserStore(state => state.user);
   const clearDepartments = useDepartmentsStore(state => state.clearAll);
   const notifications = useNotificationStore(state => state.notifications);
@@ -238,6 +240,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   }
 
   const handleLogout = () => {
+    sessionStorage.removeItem("sidebarMode");
     clearDepartments();
     logout();
     navi("/");
@@ -445,6 +448,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                 onClick={() => {
                   const nextAdminMode = !isAdminMode;
                   setIsAdminMode(nextAdminMode);
+
+                  sessionStorage.setItem('sidebarMode', nextAdminMode ? 'admin' : 'general');
+
                   setOpenMenuName(null);
                   navi(nextAdminMode ? '/adminMain' : '/main');
                 }}
