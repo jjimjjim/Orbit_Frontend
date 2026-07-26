@@ -26,7 +26,10 @@ const Header = ({ onMenuClick }) => {
     MEETING: "[회의]",
     APPROVAL: "[결재 요청]",
     APPROVED: "[결재 승인]",
-    REJECTED: "[결재 반려]"
+    REJECTED: "[결재 반려]",
+    SUPPLY: "[비품 신청]",
+    SUPPLY_APPROVED: "[비품 신청 승인]",
+    SUPPLY_REJECTED: "[비품 신청 반려]"
   };
 
   // 타입별 라벨 색상
@@ -38,6 +41,9 @@ const Header = ({ onMenuClick }) => {
     APPROVAL: "text-slate-600",
     APPROVED: "text-green-600",
     REJECTED: "text-red-600",
+    SUPPLY: "text-orange-600",
+    SUPPLY_APPROVED: "text-green-600",
+    SUPPLY_REJECTED: "text-red-600",
   };
 
   // 타입별 점(dot) 색상
@@ -49,6 +55,9 @@ const Header = ({ onMenuClick }) => {
     APPROVAL: "bg-slate-400",
     APPROVED: "bg-green-500",
     REJECTED: "bg-red-500",
+    SUPPLY: "bg-orange-500",
+    SUPPLY_APPROVED: "bg-green-500",
+    SUPPLY_REJECTED: "bg-red-500",
   };
 
   useEffect(() => {
@@ -122,6 +131,16 @@ const Header = ({ onMenuClick }) => {
         // 미팅 참석 알림
         case "MEETING":
           navi(`/calendar`);
+          break;
+
+        // 비품 신청 알림
+        case "SUPPLY":
+          navi(`/adminSupplyRequest`)
+          break;
+
+        // 비품 신청 승인/반려 알림
+        case "SUPPLY_REQUEST":
+          navi(`/supplyHistory`)
           break;
 
         default:

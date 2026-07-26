@@ -84,6 +84,21 @@ export const connectSocket = (usersId) => {
                             showToast(noti.content, "🗑️");
                             break;
 
+                        // 비품 신청 알림
+                        case "SUPPLY":
+                            showToast(noti.content, "🖥️");
+                            break;
+
+                        // 비품 신청 승인 알림
+                        case "SUPPLY_APPROVED":
+                            showToast(noti.content, "✅");
+                            break;
+
+                        // 비품 신청 반려 알림
+                        case "SUPPLY_REJECTED":
+                            showToast(noti.content, "❌");
+                            break;
+
                         default:
                             showToast(noti.content);
                     }
