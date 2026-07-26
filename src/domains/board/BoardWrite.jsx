@@ -9,7 +9,7 @@ import { alertSuccess, alertError } from '../../utils/alert';
 
 // 💡 폰트 크기 whitelist를 숫자(px) 단위로 등록
 const Size = Quill.import('attributors/style/size');
-Size.whitelist = ['12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px','64px', '72px'];
+Size.whitelist = ['12px', '14px', '16px', '18px', '20px', '24px', '32px', '48px', '64px', '72px'];
 Quill.register(Size, true);
 
 const CATEGORIES_HR = ['공지', '경조', '생일', '승진', '부서 이동', '자유'];
@@ -24,13 +24,14 @@ const BoardWrite = () => {
   const fileInputRef = useRef(null);
   const categoryRef = useRef(null);
 
-  const userAuthGroups = user?.user_auth_group ?? [];
-  const isHR =
-  user?.auth_group === 'ROLE_HR_ADMIN' ||
-  user?.auth_group === 'ROLE_SUPER_ADMIN' ||
-  userAuthGroups.includes('ROLE_HR_ADMIN') ||
-  userAuthGroups.includes('ROLE_SUPER_ADMIN');
-  
+  // [수정] 권한 상관없이 카테고리 선택이 가능하도록 권한 확인 코드 주석 처리
+  // const userAuthGroups = user?.user_auth_group ?? [];
+  // const isHR =
+  // user?.auth_group === 'ROLE_HR_ADMIN' ||
+  // user?.auth_group === 'ROLE_SUPER_ADMIN' ||
+  // userAuthGroups.includes('ROLE_HR_ADMIN') ||
+  // userAuthGroups.includes('ROLE_SUPER_ADMIN');
+
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   useEffect(() => {
@@ -52,7 +53,9 @@ const BoardWrite = () => {
   }, [isCategoryOpen]);
 
   const [form, setForm] = useState({
-    category: editPost?.category || (isHR ? CATEGORIES_HR[0] : '자유'),
+    // [수정] 권한 상관없이 카테고리 선택, 초기값을 '자유'로 설정
+    // category: editPost?.category || (isHR ? CATEGORIES_HR[0] : '자유'),
+    category: editPost?.category || '자유',
     title: editPost?.title || '',
     content: editPost?.content || '',
   });
@@ -214,7 +217,9 @@ const BoardWrite = () => {
 
     const formData = new FormData();
     // 일반 폼 데이터 바인딩
-    formData.append('category', isHR ? form.category : '자유');
+    // [수정] 권한 관계없이 선택한 카테고리 전송하도록 isHR 조건 주석 처리
+    // formData.append('category', isHR ? form.category : '자유');
+    formData.append('category', form.category);
     formData.append('title', form.title);
     formData.append('content', form.content); // Quill의 HTML 문자열이 그대로 전송됨
     // 일반 첨부파일 배열 바이딩
@@ -288,51 +293,53 @@ const BoardWrite = () => {
 
             {/* 카테고리 + 제목 한 줄 (데스크톱) */}
             <div className="flex flex-col md:flex-row gap-4">
-              {/* 카테고리 - 인사팀만 노출 */}
-              {isHR && (
-                <div className="md:w-44 shrink-0">
-                  <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
-                    카테고리
-                  </label>
-                  <div className="relative" ref={categoryRef}>
-                    <div
-                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                      className={`w-full px-4 py-3 bg-white border ${isCategoryOpen ? 'border-indigo-400 ring-4 ring-indigo-600/5' : 'border-gray-200'
-                        } rounded-2xl text-sm font-bold text-gray-700 transition-all cursor-pointer flex justify-between items-center`}
+              {/* [수정] 권한 상관없이 모든 사용자에게 카테고리 노출 (isHR 조건 주석 처리) */}
+              {/* {isHR && ( */}
+              <div className="md:w-44 shrink-0">
+                <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider mb-2 block">
+                  카테고리
+                </label>
+                <div className="relative" ref={categoryRef}>
+                  <div
+                    onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                    className={`w-full px-4 py-3 bg-white border ${isCategoryOpen ? 'border-indigo-400 ring-4 ring-indigo-600/5' : 'border-gray-200'
+                      } rounded-2xl text-sm font-bold text-gray-700 transition-all cursor-pointer flex justify-between items-center`}
+                  >
+                    <span>{form.category}</span>
+                    <svg
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
                     >
-                      <span>{form.category}</span>
-                      <svg
-                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isCategoryOpen ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                    {isCategoryOpen && (
-                      <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                        {CATEGORIES_HR.map((c) => (
-                          <div
-                            key={c}
-                            onClick={() => {
-                              handleCategoryChange(c);
-                              setIsCategoryOpen(false);
-                            }}
-                            className="px-4 py-3 text-sm hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer font-bold text-gray-700 border-b border-gray-50 last:border-0"
-                          >
-                            {c}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
+                  {isCategoryOpen && (
+                    <div className="absolute z-20 w-full mt-1 bg-white border border-gray-100 rounded-2xl shadow-xl max-h-48 overflow-y-auto custom-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                      {CATEGORIES_HR.map((c) => (
+                        <div
+                          key={c}
+                          onClick={() => {
+                            handleCategoryChange(c);
+                            setIsCategoryOpen(false);
+                          }}
+                          className="px-4 py-3 text-sm hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer font-bold text-gray-700 border-b border-gray-50 last:border-0"
+                        >
+                          {c}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+              {/* )} */}
 
               {/* 제목 */}
-              <div className={`flex-1 ${!isHR ? 'w-full' : ''}`}>
+              {/* [수정] 카테고리 드롭다운 권한 설정 주석 처리 */}
+              {/* <div className={`flex-1 ${!isHR ? 'w-full' : ''}`}> */}
+              <div className="flex-1">
                 <div className="flex justify-between items-end mb-2">
                   <label className="text-[0.7rem] font-extrabold text-gray-400 uppercase tracking-wider block">
                     제목
